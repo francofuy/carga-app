@@ -2,7 +2,7 @@
 <html lang="es-UY">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,25 +11,45 @@
 <title>Carga</title>
 <style>
 :root {
-  --bg: #000; --sheet: #141414; --chip: #262629; --ink: #fff; --ink-2: #8e8e93; --accent: #4fb58a; --warn: #e5a93b;
+  --bg: #000; --chip: #262629; --ink: #fff; --ink-2: #a3a3aa; --accent: #4fb58a; --warn: #e5a93b;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; background: var(--bg); overscroll-behavior: none; }
-body { display: grid; place-items: center; font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; font-variant-numeric: tabular-nums; touch-action: manipulation; }
+body { display: grid; place-items: center; font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; font-variant-numeric: tabular-nums; -webkit-touch-callout: none; }
+* { touch-action: pan-x pan-y; } /* sin zoom por gestos: es una app, no una página. Los contenedores con scroll cortan la herencia, por eso va en todos */
 [hidden] { display: none !important; } /* si no, las reglas display de las clases pisan el atributo hidden */
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 ul { list-style: none; }
 
-/* ---------- Teléfono ---------- */
-.phone { position: relative; width: 100%; height: 100dvh; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-@media (min-width: 600px) {
-  body { background: #0b0b0b; height: 100vh; }
-  .phone { width: 402px; height: 874px; border-radius: 56px; transform-origin: center; outline: 10px solid #1a1a1a; --safe-top: 59px; --safe-bottom: 34px; }
-  .phone::before { content: ""; position: absolute; z-index: 80; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: #000; pointer-events: none; }
+/* ---------- App ---------- */
+/* Ocupa toda la pantalla. En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
+.app { position: relative; width: 100%; max-width: 440px; height: 100dvh; overflow: hidden; --bg: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 600px) { body { background: #0b0b0b; } }
+/* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
+   Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
+.app, .home {
+  --glass: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 24%), #0b0b0b) 82%, transparent);
+  --glass-in: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 22%), #1c1c1e) 70%, transparent);
+  --glass-hi: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 28%), #2c2c2f) 85%, transparent);
 }
+
+/* ---------- Fondo: tinte plano (14 % del color de la ficha), textura y ondas ----------
+   Todo es plano y se mueve solo con transform y opacity. El tinte y la textura siguen al carril (--bgk, --tx);
+   las ondas salen de la ficha activa. Quietas con «Reducir movimiento» o cuando hay otra pantalla encima. */
+.bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.bg-tint { position: absolute; inset: 0; background: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); }
+.bg-tex { position: absolute; top: 0; bottom: 0; left: -40px; right: -40px; background: var(--tex, none) center / auto no-repeat; will-change: transform; }
+.bg-rings i { position: absolute; left: 50%; bottom: calc(152px + var(--safe-bottom) - 520px); width: 1040px; height: 1040px; margin-left: -520px; border-radius: 50%;
+  border: 1.5px solid var(--bgk, var(--accent)); opacity: 0; transform: scale(0.12); will-change: transform, opacity; animation: wave 9s cubic-bezier(0.23, 1, 0.32, 1) infinite; }
+.bg-rings i:nth-child(2) { animation-delay: -3s; }
+.bg-rings i:nth-child(3) { animation-delay: -6s; }
+.app.live .bg-rings i { animation-duration: 5s; }
+.app.fn-open .bg-rings i { animation-play-state: paused; }
+.app.still .bg-rings i { animation: none; }
+@keyframes wave { 0% { transform: scale(0.12); opacity: 0; } 8% { opacity: 0.26; } 100% { transform: scale(1); opacity: 0; } }
 
 /* ---------- Inicio ---------- */
 .home { position: absolute; inset: 0; display: flex; flex-direction: column; }
@@ -38,7 +58,7 @@ ul { list-style: none; }
 .stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px calc(238px + var(--safe-bottom)); }
 .head { font-size: min(56px, 14vw); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-align: center; }
 .head span { display: block; }
-.tray, .tray2 { position: relative; background: var(--sheet); border-radius: 44px 44px 0 0; height: calc(262px + var(--safe-bottom)); flex: none; }
+.tray, .tray2 { position: relative; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-radius: 44px 44px 0 0; height: calc(262px + var(--safe-bottom)); flex: none; }
 .tray { position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; }
 .pointer { position: absolute; top: 22px; left: 50%; margin-left: -10px; }
 .rail { position: absolute; top: 40px; left: 0; right: 0; height: 140px; display: flex; align-items: center; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
@@ -52,6 +72,7 @@ ul { list-style: none; }
 /* Ficha de poker: cuerpo, marcas del borde y anillo van del gris al color elegido a medida que la ficha llega al centro (--k) */
 .chip { display: block; width: 100%; height: 100%; overflow: visible; }
 .chip .body { fill: color-mix(in srgb, var(--cc, var(--accent)) calc(var(--k, 1) * 100%), var(--chip)); }
+.chip .tx { fill: none; stroke: color-mix(in srgb, var(--ce, #fff) calc(var(--k, 1) * 100%), #4a4a4e); opacity: calc(0.5 - var(--k, 1) * 0.18); }
 .chip .mk { fill: none; stroke: color-mix(in srgb, var(--ce, #fff) calc(var(--k, 1) * 100%), #3a3a3d); }
 .chip .rim { fill: none; stroke: rgba(255, 255, 255, calc(0.06 + var(--k, 1) * 0.16)); stroke-width: 2; }
 .chip .ring { fill: none; stroke: color-mix(in srgb, var(--ce, #fff) calc(var(--k, 1) * 70%), #3a3a3d); stroke-width: 1.5; }
@@ -61,7 +82,7 @@ ul { list-style: none; }
 .go { position: absolute; left: 50%; top: 0; width: 126px; height: 126px; margin-left: -63px; border-radius: 50%; background: var(--go, var(--accent)); color: #fff;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22); display: grid; place-items: center; font-weight: 300; letter-spacing: -0.02em; transition: transform 140ms var(--ease-out); }
 .go:active { transform: scale(0.97); }
-.nudge { position: absolute; border-radius: 50%; background: var(--chip); color: #c7c7cc; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); display: grid; place-items: center; font-size: 16px; transition: transform 140ms var(--ease-out); }
+.nudge { position: absolute; border-radius: 50%; background: var(--glass-in); color: #c7c7cc; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); display: grid; place-items: center; font-size: 16px; transition: transform 140ms var(--ease-out); }
 .nudge:active { transform: scale(0.94); }
 .nudge.s { width: 56px; height: 56px; top: 35px; }
 .nudge.l { width: 48px; height: 48px; top: 39px; font-size: 15px; color: var(--ink-2); }
@@ -77,12 +98,12 @@ ul { list-style: none; }
 .ruler-in span { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 12px; color: var(--ink-2); }
 .mark { position: absolute; top: 182px; left: 50%; width: 2px; height: 30px; margin-left: -1px; border-radius: 1px; background: var(--accent); pointer-events: none; }
 .tray2 .hint { top: 234px; }
-.inl { width: 4.2ch; text-align: center; background: #1c1c1e; border: 0; border-radius: 8px; color: var(--ink); font: inherit; font-size: 17px; padding: 2px 4px; margin: 0 2px; -webkit-user-select: text; user-select: text; }
+.inl { width: 4.2ch; text-align: center; background: var(--glass-in); border: 0; border-radius: 8px; color: var(--ink); font: inherit; font-size: 17px; padding: 2px 4px; margin: 0 2px; -webkit-user-select: text; user-select: text; }
 .from-in { width: 160px; background: none; border: 0; text-align: center; color: var(--ink); caret-color: var(--accent); font: inherit; font-size: 28px; font-weight: 300; -webkit-user-select: text; user-select: text; }
 .hint { position: absolute; top: 196px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--ink-2); }
 
 /* ---------- Funciones ---------- */
-.fn { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg); opacity: 0; visibility: hidden; transform: translateY(20px);
+.fn { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg) var(--tex, none) calc(50% + var(--tx, 0px)) 50% / auto no-repeat; opacity: 0; visibility: hidden; transform: translateY(20px);
   transition: opacity 200ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s 240ms; }
 .fn.open { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease-out), transform 360ms var(--ease-drawer), visibility 0s; }
 #fn-det { z-index: 50; }
@@ -111,16 +132,12 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .bar3 { display: flex; gap: 2px; height: 6px; margin: 14px 0 8px; border-radius: 3px; overflow: hidden; }
 .bar3 i { display: block; min-width: 2px; }
 .leg { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
-.bars { display: flex; align-items: flex-end; justify-content: space-between; height: 84px; margin-top: 14px; }
-.bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 8px; font-size: 12px; color: var(--ink-2); }
-.bars i { display: block; width: 22px; border-radius: 4px 4px 0 0; background: #3a3a3c; min-height: 2px; }
-.bars div.on i { background: var(--ink); }
 
 
-.seg { display: flex; padding: 3px; border-radius: 999px; background: #151517; justify-self: center; }
+.seg { display: flex; padding: 3px; border-radius: 999px; background: var(--glass-in); justify-self: center; }
 .seg button { position: relative; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 15px; color: var(--ink-2); transition: background-color 160ms ease, color 160ms ease; white-space: nowrap; }
 .seg button::before { content: ""; position: absolute; inset: -4px 0; }
-.seg button[aria-pressed="true"] { background: #2c2c2e; color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--glass-hi); color: var(--ink); }
 .seg.wide { display: flex; margin-top: 18px; }
 .seg.wide button { flex: 1; padding: 0 4px; }
 
@@ -136,7 +153,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .wextra::-webkit-scrollbar { display: none; }
 .choices { display: grid; gap: 10px; width: 100%; }
 .choices.two { grid-template-columns: 1fr 1fr; }
-.choice { min-height: 60px; padding: 12px 14px; border-radius: 16px; background: #1c1c1e; text-align: left; transition: transform 140ms var(--ease-out); }
+.choice { min-height: 60px; padding: 12px 14px; border-radius: 16px; background: var(--glass-in); text-align: left; transition: transform 140ms var(--ease-out); }
 .choice:active { transform: scale(0.98); }
 .choice b { display: block; font-size: 17px; font-weight: 500; }
 .choice em { display: block; margin-top: 3px; font-style: normal; font-size: 13px; line-height: 1.3; color: var(--ink-2); }
@@ -151,27 +168,27 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .tray2.noruler .ruler, .tray2.noruler .mark { display: none; }
 .tray2.noruler.off .nudge { visibility: hidden; }
 .tray2.noruler .hint { top: 196px; }
-.status { display: block; margin: 10px auto 0; max-width: calc(100% - 48px); padding: 9px 16px; border-radius: 999px; background: #1c1c1e; font-size: 15px; line-height: 1.2; text-align: center; transition: transform 140ms var(--ease-out); }
+.status { display: block; margin: 10px auto 0; max-width: calc(100% - 48px); padding: 9px 16px; border-radius: 999px; background: var(--glass-in); font-size: 15px; line-height: 1.2; text-align: center; transition: transform 140ms var(--ease-out); }
 .status:active { transform: scale(0.97); }
 .status.live { box-shadow: inset 0 0 0 1.5px var(--accent); }
-.draft { margin: 10px auto 0; width: calc(100% - 48px); padding: 12px 16px 4px; border-radius: 18px; background: #1c1c1e; }
+.draft { margin: 10px auto 0; width: calc(100% - 48px); padding: 12px 16px 4px; border-radius: 18px; background: var(--glass-in); }
 .draft p { font-size: 15px; font-weight: 500; }
 .draft .ds { margin-top: 2px; font-size: 13px; font-weight: 400; color: var(--ink-2); }
 .draft .da { display: flex; gap: 20px; }
 .draft .da button { min-height: 44px; padding: 0; font-size: 15px; color: var(--accent); }
 .draft .da button + button { color: var(--ink-2); }
-.timein { width: 112px; height: 44px; padding: 0 8px; border: 0; border-radius: 14px; background: #1c1c1e; color: var(--ink); font: inherit; font-size: 22px; text-align: center; color-scheme: dark; -webkit-user-select: text; user-select: text; }
+.timein { width: 112px; height: 44px; padding: 0 8px; border: 0; border-radius: 14px; background: var(--glass-in); color: var(--ink); font: inherit; font-size: 22px; text-align: center; color-scheme: dark; -webkit-user-select: text; user-select: text; }
 .stp { display: flex; align-items: center; justify-content: space-between; min-height: 84px; }
 .stp b { display: block; font-size: 20px; font-weight: 500; }
 .stp em { display: block; margin-top: 4px; font-style: normal; font-size: 13px; color: var(--ink-2); }
 .step { display: flex; align-items: center; }
-.step button { width: 44px; height: 44px; border-radius: 50%; background: var(--chip); font-size: 24px; font-weight: 300; line-height: 44px; transition: transform 140ms var(--ease-out); }
+.step button { width: 44px; height: 44px; border-radius: 50%; background: var(--glass-in); font-size: 24px; font-weight: 300; line-height: 44px; transition: transform 140ms var(--ease-out); }
 .step button:active { transform: scale(0.94); }
 .step output { min-width: 88px; text-align: center; font-size: 26px; font-weight: 300; }
 
 .field { display: block; padding: 10px 0; }
 .field label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--ink-2); }
-.field input, .field select { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: #1c1c1e; color: var(--ink); font: inherit; font-size: 17px; -webkit-user-select: text; user-select: text; color-scheme: dark; appearance: none; }
+.field input, .field select { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--glass-in); color: var(--ink); font: inherit; font-size: 17px; -webkit-user-select: text; user-select: text; color-scheme: dark; appearance: none; }
 .field .hintt { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pill { display: block; width: 100%; height: 48px; margin-top: 22px; border-radius: 999px; background: #fff; color: #000; font-size: 17px; font-weight: 600; transition: transform 140ms var(--ease-out); }
@@ -190,8 +207,9 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .toast { color: var(--accent); }
 
 /* Historial: calendario (todo con alcance #hist) */
-#hist { --valle: #4fb58a; --llano: #8e8e93; --punta: #fff; --line: #1a1a1a; }
-#hist .hh { flex: none; padding: 10px 20px 0; }
+#hist, #dayHud { --valle: #4fb58a; --llano: #8e8e93; --punta: #fff; --line: #1a1a1a; }
+#hist .hh { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 20px calc(var(--hud-h, 0px) + var(--safe-bottom) + 24px); }
+#hist .hh::-webkit-scrollbar { display: none; }
 #hist .hsub { margin-top: 2px; font-size: 14px; line-height: 1.3; color: var(--ink-2); }
 #hist .hsub b { font-weight: 500; color: var(--ink); }
 #hist .htabs { display: flex; gap: 22px; margin-top: 8px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
@@ -202,22 +220,22 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 #hist .legend { display: flex; gap: 14px; margin-top: 12px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 #hist .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -0.5px; }
 #hist .legend .l1::before { background: var(--valle); } #hist .legend .l2::before { background: var(--llano); } #hist .legend .l3::before { background: var(--punta); } #hist .legend .l4::before { box-shadow: inset 0 0 0 1.5px var(--llano); }
-#hist .stackh { display: flex; gap: 1px; height: 100%; width: 100%; }
-#hist .stackh i, #hist .stackv i { display: block; min-width: 1px; }
-#hist .stackv { display: flex; flex-direction: column-reverse; gap: 1px; width: 100%; height: 100%; }
-#hist .stackv i { min-height: 1px; }
-#hist .v1 { background: var(--valle); } #hist .v2 { background: var(--llano); } #hist .v3 { background: var(--punta); }
-#hist .outl { width: 100%; height: 100%; box-shadow: inset 0 0 0 1.5px var(--llano); }
+:is(#hist, #dayHud) .stackh { display: flex; gap: 1px; height: 100%; width: 100%; }
+:is(#hist, #dayHud) .stackh i, :is(#hist, #dayHud) .stackv i { display: block; min-width: 1px; }
+:is(#hist, #dayHud) .stackv { display: flex; flex-direction: column-reverse; gap: 1px; width: 100%; height: 100%; }
+:is(#hist, #dayHud) .stackv i { min-height: 1px; }
+:is(#hist, #dayHud) .v1 { background: var(--valle); } :is(#hist, #dayHud) .v2 { background: var(--llano); } :is(#hist, #dayHud) .v3 { background: var(--punta); }
+:is(#hist, #dayHud) .outl { width: 100%; height: 100%; box-shadow: inset 0 0 0 1.5px var(--llano); }
 
 /* detalle de una carga */
-#hist .det { padding: 6px 0 14px; }
-#hist .det .dk { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
-#hist .det .dk span { color: var(--ink-2); }
-#hist .det .dk b { font-weight: 500; text-align: right; }
-#hist .det .dk em { color: var(--ink-2); font-style: normal; font-weight: 400; margin-left: 6px; }
-#hist .det .dbar { height: 5px; margin: 4px 0 6px; }
-#hist .det .ddel { margin-top: 6px; height: 40px; padding: 0 14px; border-radius: 10px; background: #1c1c1e; color: #ff6b6b; font-size: 14px; transition: transform 140ms var(--ease-out); }
-#hist .det .ddel:active { transform: scale(0.97); }
+:is(#hist, #dayHud) .det { padding: 6px 0 14px; }
+:is(#hist, #dayHud) .det .dk { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+:is(#hist, #dayHud) .det .dk span { color: var(--ink-2); }
+:is(#hist, #dayHud) .det .dk b { font-weight: 500; text-align: right; }
+:is(#hist, #dayHud) .det .dk em { color: var(--ink-2); font-style: normal; font-weight: 400; margin-left: 6px; }
+:is(#hist, #dayHud) .det .dbar { height: 5px; margin: 4px 0 6px; }
+:is(#hist, #dayHud) .det .ddel { margin-top: 6px; height: 40px; padding: 0 14px; border-radius: 10px; background: var(--glass-in); color: #ff8080; font-size: 14px; transition: transform 140ms var(--ease-out); }
+:is(#hist, #dayHud) .det .ddel:active { transform: scale(0.97); }
 
 
 /* calendario */
@@ -241,16 +259,27 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 #hist .day.today .dn::after { content: ""; display: block; height: 2px; margin: 3px auto 0; width: 12px; background: var(--ink); }
 #hist .day .dbars { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; align-items: flex-end; gap: 3px; height: 38px; }
 #hist .day .dbars > span { display: flex; width: 12px; }
-#hist .day[aria-pressed="true"] { background: var(--sheet); box-shadow: inset 0 0 0 1px #3a3a3c; }
-#hist .cal-det { flex: 1; min-height: 0; margin-top: 10px; border-top: 1px solid var(--line); overflow-y: auto; padding: 14px 20px calc(var(--safe-bottom) + 20px); }
-#hist .cal-det::-webkit-scrollbar { display: none; }
-#hist .cal-det h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-#hist .cal-det .none { margin-top: 6px; font-size: 14px; color: var(--ink-2); }
-#hist .cd { padding: 10px 0; border-bottom: 1px solid var(--line); }
-#hist .cd:last-child { border: 0; }
-#hist .cd .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 17px; }
-#hist .cd .top b { font-weight: 500; }
-#hist .cd .l2 { margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+#hist .day[aria-pressed="true"] { background: var(--glass-in); box-shadow: inset 0 0 0 1px #3a3a3c; }
+/* Panel del día (HUD): flota sobre el calendario, semitransparente, con el tinte del fondo */
+#dayHud { position: absolute; z-index: 6; left: 12px; right: 12px; bottom: calc(var(--safe-bottom) + 12px); max-height: min(60%, 480px); display: flex; flex-direction: column; border-radius: 28px; overflow: hidden;
+  --line: rgba(255, 255, 255, 0.1);
+  background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  opacity: 0; visibility: hidden; transform: translateY(28px) scale(0.98); transform-origin: 50% 100%;
+  transition: opacity 180ms var(--ease-out), transform 300ms var(--ease-drawer), visibility 0s 300ms; }
+#dayHud.open { opacity: 1; visibility: visible; transform: none; transition: opacity 200ms var(--ease-out), transform 340ms var(--ease-drawer), visibility 0s; }
+#dayHud.drag { transition: none; }
+#dayHud .hud-bar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 8px 4px 20px; touch-action: none; cursor: grab; }
+#dayHud .hud-bar h4 { font-size: 17px; font-weight: 600; }
+#dayHud .hud-bar p { margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+#dayHud .hud-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px 14px; }
+#dayHud .hud-body::-webkit-scrollbar { display: none; }
+#dayHud .none { margin-top: 6px; padding-bottom: 6px; font-size: 14px; color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { #dayHud { transform: none; } }
+:is(#hist, #dayHud) .cd { padding: 10px 0; border-bottom: 1px solid var(--line); }
+:is(#hist, #dayHud) .cd:last-child { border: 0; }
+:is(#hist, #dayHud) .cd .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 17px; }
+:is(#hist, #dayHud) .cd .top b { font-weight: 500; }
+:is(#hist, #dayHud) .cd .l2 { margin-top: 2px; font-size: 13px; color: var(--ink-2); }
 
 /* Ajustes, importar y taller de fichas */
 .lrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 60px; padding: 10px 0; text-align: left; transition: background-color 140ms ease; }
@@ -260,7 +289,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .lrow em { display: block; margin-top: 3px; font-style: normal; font-size: 13px; line-height: 1.3; color: var(--ink-2); }
 .lrow svg { flex: none; fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .lrow.danger b { color: #ff6b6b; }
-.msg { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #1c1c1e; font-size: 14px; line-height: 1.35; }
+.msg { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--glass-in); font-size: 14px; line-height: 1.35; }
 .msg.err { color: #ff8a80; }
 .msg.ok { color: var(--accent); }
 .ghost { display: block; margin: 8px auto 0; }
@@ -277,15 +306,23 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .fx-sw button i { display: block; width: 28px; height: 28px; border-radius: 50%; transition: transform 140ms var(--ease-out); }
 .fx-sw button:active i { transform: scale(0.92); }
 .fx-sw button[aria-pressed="true"] i { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
+.fx-tex { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px 0; justify-items: center; }
+.fx-tex button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 56px; min-height: 44px; font-size: 12px; color: var(--ink-2); }
+.fx-tex button i { position: relative; display: block; width: 44px; height: 44px; border-radius: 50%; transition: transform 140ms var(--ease-out); }
+.fx-tex button:active i { transform: scale(0.94); }
+.fx-tex button[aria-pressed="true"] { color: var(--ink); }
+.fx-tex button[aria-pressed="true"] i::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; box-shadow: 0 0 0 2px var(--ink); }
+.fx-tex .chip { --k: 1; }
 .fx-sec { margin: 22px 0 0; }
 .fx-sec h3 { margin: 0 0 8px; }
 .fx-sec .seg.wide { margin-top: 0; }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; } .bg-rings i { animation: none; } }
 </style>
 </head>
 <body>
-<main class="phone" id="phone">
+<main class="app" id="app">
+  <div class="bg" id="bg" aria-hidden="true"><div class="bg-tint"></div><div class="bg-tex" id="bgTex"></div><div class="bg-rings"><i></i><i></i><i></i></div></div>
   <div class="probe" id="probe" style="position:absolute;visibility:hidden"></div>
 
   <!-- ===== Inicio ===== -->
@@ -323,6 +360,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       <h2>Historial</h2><span></span>
     </header>
     <div class="fn-body" id="hist"></div>
+    <aside class="hud" id="dayHud" role="region" aria-label="Detalle del día" inert></aside>
   </section>
 
   <!-- ===== Gasto ===== -->
@@ -371,6 +409,15 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     <input type="file" id="impFile" accept=".json,application/json" hidden>
   </section>
 
+  <!-- ===== Fondo ===== -->
+  <section class="fn" id="fn-fondo" aria-label="Personalizar fondo" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Fondo</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="fondo"></div></div>
+  </section>
+
   <!-- ===== Taller de fichas ===== -->
   <section class="fn" id="fn-fichas" aria-label="Personalizar fichas" inert>
     <header class="fn-bar">
@@ -387,7 +434,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   'use strict';
   const L = CargaLogic;
   const $ = (s) => document.querySelector(s);
-  const phone = $('#phone');
+  const appEl = $('#app');
 
   /* ---------- Formato (es-UY) ---------- */
   const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -449,7 +496,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   /* ---------- Fichas: carril con zoom central ---------- */
   const SLOT = 100, CHIP_D = 126, CHIP_GAP = 16; // paso del carril, diámetro de la ficha activa, espacio fijo entre bordes
-  function makeRail(el, { count, html, label, onChange, onActivate }) {
+  function makeRail(el, { count, html, label, onChange, onActivate, onFrame }) {
     el.innerHTML = Array.from({ length: count }, (_, i) => `<button class="slot" data-i="${i}" aria-label="${label(i)}"><span class="c">${html(i)}</span></button>`).join('');
     const slots = [...el.children], discs = slots.map((s) => s.firstElementChild);
     let idx = -1, prog = false, timer = 0, raf = 0, md = null, dragged = false;
@@ -475,6 +522,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
         discs[i].style.setProperty('--k', ks[i].toFixed(3));
         slots[i].style.zIndex = Math.round(ks[i] * 10);
       }
+      if (onFrame) onFrame(p);
       const n = at();
       if (n !== idx) { idx = n; onChange(n, !prog); }
     }
@@ -541,11 +589,46 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   const CHIP_COLORS = [['#4fb58a', 'Verde'], ['#4a8fe0', 'Azul'], ['#d65a52', 'Rojo'], ['#e08a3c', 'Naranja'], ['#8c6fd6', 'Violeta'], ['#d9648f', 'Rosa'], ['#3fb3c4', 'Turquesa'], ['#6b6b72', 'Grafito']];
   const CHIP_EDGES = [['marcas', 'Marcas'], ['puntos', 'Puntos'], ['rayas', 'Rayas'], ['liso', 'Liso']];
   const CHIP_WEIGHTS = { fino: 1.1, normal: 1.5, grueso: 2 };
-  const chipDefault = () => ({ color: CHIP_COLORS[0][0], edge: 'marcas', tone: 'claro', ring: true, weight: 'normal' });
+  /**
+   * Texturas: un solo trazo plano (sin degradés). Cada una es una función (ancho, alto, redonda) que devuelve el trazo,
+   * así sirve para la ficha (126 × 126, recortada al círculo) y para el fondo de la app.
+   * [id, nombre, trazo, grosor, extremo]
+   */
+  const CHIP_TEXTURES = (() => {
+    const rep = (a, b, s, fn) => { let d = ''; for (let v = a; v <= b; v += s) d += fn(v); return d; };
+    const r1 = (n) => Math.round(n * 10) / 10;
+    const grain = (w, h, round) => { // siempre el mismo granulado
+      let seed = 7, d = ''; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let n = 0, max = round ? 120 : Math.round(120 * (w * h) / (Math.PI * 3600)); n < max;) { const x = rnd() * w, y = rnd() * h; if (!round || (x - w / 2) ** 2 + (y - h / 2) ** 2 < 3600) { d += `M${r1(x)} ${r1(y)}h0`; n++; } }
+      return d;
+    };
+    const ray = (w, h, round) => { const R = round ? 66 : Math.hypot(w, h) / 2 + 4; return rep(0, 23, 1, (i) => { const a = i * Math.PI / 12, c = Math.cos(a), s = Math.sin(a); return `M${r1(w / 2 + 30 * c)} ${r1(h / 2 + 30 * s)}L${r1(w / 2 + R * c)} ${r1(h / 2 + R * s)}`; }); };
+    const rings = (w, h, round) => rep(1, Math.floor((round ? 63 : Math.hypot(w, h) / 2) / 9), 1, (i) => `M${r1(w / 2 - i * 9)} ${r1(h / 2)}a${i * 9} ${i * 9} 0 1 0 ${i * 18} 0a${i * 9} ${i * 9} 0 1 0 ${-i * 18} 0`);
+    return [
+      ['liso', 'Liso', () => '', 0, 'butt'],
+      ['rayas', 'Rayas', (w, h) => rep(-h, w, 13, (c) => `M${c} 0L${c + h} ${h}`), 3, 'butt'],
+      ['cuadricula', 'Cuadrícula', (w, h) => rep(-Math.ceil(w / 28), Math.ceil(w / 28), 1, (i) => `M${r1(w / 2 + i * 14)} 0V${h}`) + rep(-Math.ceil(h / 28), Math.ceil(h / 28), 1, (j) => `M0 ${r1(h / 2 + j * 14)}H${w}`), 1.5, 'butt'],
+      ['puntos', 'Puntos', (w, h) => rep(0, Math.ceil(h / 14), 1, (j) => rep(0, Math.ceil(w / 14), 1, (i) => `M${(j % 2 ? 7 : 0) + i * 14} ${7 + j * 14}h0`)), 3.4, 'round'],
+      ['ondas', 'Ondas', (w, h) => rep(0, Math.ceil(h / 14), 1, (j) => `M-2 ${7 + j * 14}q10.5 -8 21 0${'t21 0'.repeat(Math.ceil((w + 4) / 21) - 1)}`), 1.8, 'round'],
+      ['rombos', 'Rombos', (w, h) => rep(-h, w, 20, (c) => `M${c} 0L${c + h} ${h}`) + rep(0, w + h, 20, (c) => `M${c} 0L${c - h} ${h}`), 1.5, 'butt'],
+      ['escamas', 'Escamas', (w, h) => rep(0, Math.ceil(h / 9), 1, (j) => rep(-1, Math.ceil(w / 18), 1, (i) => `M${(j % 2 ? 9 : 0) + i * 18} ${j * 9}a9 9 0 0 0 18 0`)), 1.5, 'butt'],
+      ['rayos', 'Rayos', ray, 2, 'butt'],
+      ['circulos', 'Círculos', rings, 1.5, 'butt'],
+      ['granulado', 'Granulado', grain, 2.4, 'round'],
+    ];
+  })();
+  let chipUid = 0;
+  /** Capa de textura de una ficha; cada svg lleva su propio recorte para que los ids no choquen. */
+  function texSvg(tex) {
+    const T = CHIP_TEXTURES.find((t) => t[0] === tex); if (!T || tex === 'liso') return '';
+    const id = `cx${++chipUid}`;
+    return `<clipPath id="${id}"><circle cx="63" cy="63" r="63"/></clipPath><g clip-path="url(#${id})"><path class="tx" d="${T[2](126, 126, true)}" stroke-width="${T[3]}" stroke-linecap="${T[4]}"/></g>`;
+  }
+  const chipDefault = () => ({ color: CHIP_COLORS[0][0], tex: 'liso', edge: 'marcas', tone: 'claro', ring: true, weight: 'normal' });
   /** Deja solo valores permitidos: sirve también para fichas que llegan de un respaldo. */
   function cleanChip(c) {
     const d = chipDefault(); if (!c || typeof c !== 'object') return d;
-    return { color: /^#[0-9a-f]{6}$/i.test(c.color) ? c.color : d.color, edge: CHIP_EDGES.some((e) => e[0] === c.edge) ? c.edge : d.edge,
+    return { color: /^#[0-9a-f]{6}$/i.test(c.color) ? c.color : d.color, tex: CHIP_TEXTURES.some((t) => t[0] === c.tex) ? c.tex : d.tex, edge: CHIP_EDGES.some((e) => e[0] === c.edge) ? c.edge : d.edge,
       tone: c.tone === 'oscuro' ? 'oscuro' : 'claro', ring: c.ring !== false, weight: CHIP_WEIGHTS[c.weight] ? c.weight : d.weight };
   }
   const cleanChips = (all) => Object.fromEntries(Object.keys(ICONS).map((id) => [id, cleanChip(all && all[id])]));
@@ -556,7 +639,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
    */
   function chipSvg(id, c = S.chips[id]) {
     const E = { marcas: ['21 22.2', 12, 'butt', 10.5], puntos: ['0.01 21.59', 6, 'round', 0], rayas: ['3 11.4', 12, 'butt', 1.5] }[c.edge]; // 8, 16 y 24 marcas sobre r = 55
-    return `<svg class="chip" viewBox="0 0 126 126" aria-hidden="true" style="--cc:${c.color};--ce:${c.tone === 'oscuro' ? '#1a1a1c' : '#fff'}"><circle class="body" cx="63" cy="63" r="63"/>`
+    return `<svg class="chip" viewBox="0 0 126 126" aria-hidden="true" style="--cc:${c.color};--ce:${c.tone === 'oscuro' ? '#1a1a1c' : '#fff'}"><circle class="body" cx="63" cy="63" r="63"/>` + texSvg(c.tex)
       + (E ? `<circle class="mk" cx="63" cy="63" r="55" stroke-width="${E[1]}" stroke-dasharray="${E[0]}" stroke-dashoffset="${E[3]}" stroke-linecap="${E[2]}" transform="rotate(-90 63 63)"/>` : '')
       + `<circle class="rim" cx="63" cy="63" r="62"/>` + (c.ring ? '<circle class="ring" cx="63" cy="63" r="42"/>' : '')
       + `<g class="ic" transform="translate(36 36) scale(2.25)" stroke-width="${CHIP_WEIGHTS[c.weight]}">${ICONS[id]}</g></svg>`;
@@ -564,6 +647,51 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   /** La ficha central de Registrar y Programar toma el color de su ficha del inicio. */
   function paintGo() { [['cargar', '#fn-cargar'], ['prog', '#fn-prog']].forEach(([id, sel]) => $(sel).style.setProperty('--go', S.chips[id].color)); }
   paintGo();
+
+  /* ---------- Fondo: tinte plano + textura + movimiento ---------- */
+  const BG_TINTS = [['ninguno', 'Sin tinte'], ['ficha', 'Sigue a la ficha'], ['color', 'Un color']];
+  /* La imagen va a tamaño real (1 px = 1 px, centrada) y es más grande que cualquier pantalla: 440 px de columna máxima + 2 × 40 de recorrido, y hasta 1600 px de alto.
+     Antes se escalaba al alto de la pantalla y en pantallas bajas quedaba más angosta que el fondo: los bordes quedaban sin textura. */
+  const BG_W = 600, BG_H = 1600, BG_SHIFT = 80;
+  const bgDefault = () => ({ tint: 'ficha', color: CHIP_COLORS[0][0], tex: 'liso', motion: true });
+  function cleanBg(b) {
+    const d = bgDefault(); if (!b || typeof b !== 'object') return d;
+    return { tint: BG_TINTS.some((t) => t[0] === b.tint) ? b.tint : d.tint, color: /^#[0-9a-f]{6}$/i.test(b.color) ? b.color : d.color,
+      tex: CHIP_TEXTURES.some((t) => t[0] === b.tex) ? b.tex : d.tex, motion: b.motion !== false };
+  }
+  S.bg = cleanBg(S.bg);
+  const bgEl = $('#bg'), homeEl = $('#home'), bgTex = $('#bgTex'), reduceMotion = matchMedia('(prefers-reduced-motion: reduce)'), CHIP_IDS = Object.keys(ICONS);
+  const hexMix = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  const bgUrls = {};
+  /** La textura como imagen SVG plana (trazo blanco al 6 %): una sola, compartida por el inicio y todas las pantallas. */
+  function bgTexUrl(id) {
+    if (id === 'liso') return 'none';
+    const T = CHIP_TEXTURES.find((t) => t[0] === id);
+    return bgUrls[id] ??= `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${BG_W}" height="${BG_H}" viewBox="0 0 ${BG_W} ${BG_H}"><path d="${T[2](BG_W, BG_H, false)}" fill="none" stroke="#fff" stroke-opacity="0.06" stroke-width="${T[3]}" stroke-linecap="${T[4]}"/></svg>`)}")`;
+  }
+  let bgP = 0; // posición del carril, en fichas (0 = primera)
+  const bgMoves = () => S.bg.motion && !reduceMotion.matches;
+  const bgShift = (p) => ((0.5 - p / (CHIP_IDS.length - 1)) * BG_SHIFT).toFixed(1);
+  /** Cada cuadro del carril: el color pasa de una ficha a la siguiente y la textura se desplaza apenas, al ritmo del dedo. */
+  function bgFrame(p) {
+    bgP = p;
+    const lo = Math.max(0, Math.min(CHIP_IDS.length - 1, Math.floor(p))), hi = Math.min(CHIP_IDS.length - 1, lo + 1);
+    const col = S.bg.tint === 'color' ? S.bg.color : hexMix(S.chips[CHIP_IDS[lo]].color, S.chips[CHIP_IDS[hi]].color, Math.min(1, Math.max(0, p - lo)));
+    bgEl.style.setProperty('--bgk', col); homeEl.style.setProperty('--bgk', col);
+    bgTex.style.transform = bgMoves() ? `translate3d(${bgShift(p)}px,0,0)` : '';
+  }
+  /** Cuando el carril se asienta: las pantallas que se abren encima heredan el mismo tinte y la misma posición de la textura. */
+  function bgSettle() {
+    const i = Math.round(bgP);
+    appEl.style.setProperty('--bgk', S.bg.tint === 'color' ? S.bg.color : S.chips[CHIP_IDS[i]].color);
+    appEl.style.setProperty('--tx', bgMoves() ? `${bgShift(i)}px` : '0px');
+  }
+  function bgApply() {
+    appEl.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1');
+    appEl.style.setProperty('--tex', bgTexUrl(S.bg.tex));
+    appEl.classList.toggle('still', !S.bg.motion);
+    bgFrame(bgP); bgSettle();
+  }
 
   const FUNCS = [
     { id: 'cargar', name: 'Registrar carga', head: ['Registrar', 'carga'] },
@@ -578,9 +706,11 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     count: FUNCS.length,
     html: (i) => chipSvg(FUNCS[i].id),
     label: (i) => FUNCS[i].name,
-    onChange: (i) => { $('#head').innerHTML = FUNCS[i].head.map((w) => `<span>${w}</span>`).join(''); },
+    onChange: (i) => { $('#head').innerHTML = FUNCS[i].head.map((w) => `<span>${w}</span>`).join(''); bgSettle(); },
     onActivate: (i) => openFn(FUNCS[i].id === 'prog' && S.active ? 'activa' : FUNCS[i].id),
+    onFrame: bgFrame,
   });
+  bgApply();
 
   /* ---------- Abrir y cerrar pantallas (pila) ---------- */
   const stack = [];
@@ -593,7 +723,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const el = $('#fn-' + id);
     el.inert = false; el.classList.add('open');
     (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = true;
-    stack.push(id);
+    stack.push(id); appEl.classList.add('fn-open');
+    if (id === 'fondo') renderFondo();
     if (id === 'prog') renderProg();
     if (id === 'activa') { confirmShown = false; renderActiva(); }
     if (id === 'cargar') renderCargar();
@@ -603,7 +734,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function closeFn() {
     const id = stack[stack.length - 1]; if (!id) return;
     if (DRAFTS[id]) DRAFTS[id].wiz().flush(); // cerrar sin querer conserva lo que había cargado
-    stack.pop();
+    if (id === 'historial') closeHud();
+    stack.pop(); appEl.classList.toggle('fn-open', stack.length > 0);
     const el = $('#fn-' + id);
     el.classList.remove('open'); el.inert = true;
     (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = false;
@@ -1158,9 +1290,9 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   function renderStatus() {
     const bar = $('#activeBar'), a = S.active;
-    if (!a) { bar.hidden = true; return; }
+    if (!a) { bar.hidden = true; appEl.classList.remove('live'); return; }
     const now = new Date(), I = activeInfo(now);
-    bar.hidden = false; bar.classList.toggle('live', I.st === 'charging');
+    bar.hidden = false; bar.classList.toggle('live', I.st === 'charging'); appEl.classList.toggle('live', I.st === 'charging'); // con una carga en curso las ondas van más rápido
     if (I.st === 'waiting') bar.textContent = `Programada · arranca en ${fmtDur((I.start - now) / 60000)}`;
     else if (I.st === 'charging') bar.textContent = `Cargando · ≈ ${pctTxt(I.est(now).pct)}% · corta ${hhmm(I.stop)}`;
     else bar.textContent = 'Terminó · confirmá tu carga';
@@ -1279,8 +1411,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const first = new Date(H.y, H.m, 1), lead = (first.getDay() + 6) % 7, days = new Date(H.y, H.m + 1, 0).getDate(), now = new Date();
     const inMonth = list.filter((c) => hTime(c).getFullYear() === H.y && hTime(c).getMonth() === H.m);
     const byDay = new Map(); inMonth.forEach((c) => { const d = hTime(c).getDate(); if (!byDay.has(d)) byDay.set(d, []); byDay.get(d).push(c); });
-    // al cambiar de mes (o filtro) se elige solo el último día con cargas; un toque en un día vacío se respeta
-    if (H.day === undefined || (H.day != null && H.f !== H.lastF)) H.day = byDay.size ? Math.max(...byDay.keys()) : null;
+    // al cambiar de mes o de filtro no queda ningún día elegido: el panel del día se abre con un toque
+    if (H.day === undefined || (H.day != null && H.f !== H.lastF)) H.day = null;
     H.lastF = H.f; calCache = { byDay };
     const maxKwh = Math.max(...S.charges.map((c) => c.kwh), 1), cells = [];
     for (let i = 0; i < Math.ceil((lead + days) / 7) * 7; i++) {
@@ -1300,29 +1432,57 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const anim = H.dir ? ` slide${H.dir < 0 ? ' back' : ''}` : '';
     H.dir = 0;
     return `<div class="hh">${hSummary(inMonth)}${hTabs()}<div class="mhead"><h3>${MONTHS[H.m]} ${H.y}</h3><div>${nav(-1, 'M12 4l-6 6 6 6')}${nav(1, 'M8 4l6 6-6 6')}</div></div>`
-      + `<div class="wk">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span>${x}</span>`).join('')}</div><div class="gridwrap${anim}"><div class="cgrid">${cells.join('')}</div></div>${hLegend}</div><div class="cal-det" id="caldet">${calDetail()}</div>`;
+      + `<div class="wk">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span>${x}</span>`).join('')}</div><div class="gridwrap${anim}"><div class="cgrid">${cells.join('')}</div></div>${hLegend}</div>`;
   }
   let calCache = { byDay: new Map() };
-  function calDetail() {
-    if (H.day == null) return '<p class="none">Tocá un día para ver sus cargas.</p>';
+  /** Contenido del panel del día: el título y cada carga con su detalle. */
+  function hudHtml() {
     const d = new Date(H.y, H.m, H.day), cs = calCache.byDay.get(H.day) || [];
-    return `<h4>${cap(DOW[d.getDay()])} ${d.getDate()} de ${MONTHS[d.getMonth()]}</h4>`
-      + (cs.map((c) => `<div class="cd"><div class="top"><b>${kwhTxt(c.kwh)} kWh</b><span>${money(c.cost)}</span></div><div class="l2">${hWhere(c)}${hPct(c)}</div>${hDetail(c)}</div>`).join('') || '<p class="none">Sin cargas ese día.</p>');
+    const sub = cs.length > 1 ? `<p>${cs.length} cargas · ${kwhTxt(cs.reduce((a, c) => a + c.kwh, 0))} kWh · ${money(cs.reduce((a, c) => a + c.cost, 0))}</p>` : '';
+    return `<div class="hud-bar"><div><h4>${cap(DOW[d.getDay()])} ${d.getDate()} de ${MONTHS[d.getMonth()]}</h4>${sub}</div><button class="icon" data-hud="close" aria-label="Cerrar"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>`
+      + `<div class="hud-body">${cs.map((c) => `<div class="cd"><div class="top"><b>${kwhTxt(c.kwh)} kWh</b><span>${money(c.cost)}</span></div><div class="l2">${hWhere(c)}${hPct(c)}</div>${hDetail(c)}</div>`).join('') || '<p class="none">Sin cargas ese día.</p>'}</div>`;
   }
+  const hud = $('#dayHud'), hudIsOpen = () => hud.classList.contains('open');
+  const hudMark = () => $('#hist').querySelectorAll('.day').forEach((b) => b.setAttribute('aria-pressed', H.day != null && Number(b.dataset.d) === H.day));
+  /** Abre (o actualiza) el panel y, si el día quedó tapado, corre el calendario para que se vea por encima. */
+  function openHud() {
+    hud.innerHTML = hudHtml(); hud.inert = false; hud.classList.add('open'); hudMark();
+    const hist = $('#hist'), hh = hist.querySelector('.hh'), btn = hist.querySelector(`.day[data-d="${H.day}"]`);
+    hist.style.setProperty('--hud-h', hud.offsetHeight + 'px');
+    if (btn && hh) requestAnimationFrame(() => {
+      const top = $('#fn-historial').getBoundingClientRect().top + hud.offsetTop, over = btn.getBoundingClientRect().bottom - (top - 8);
+      if (over > 0) hh.scrollBy({ top: over, behavior: 'smooth' });
+    });
+  }
+  function closeHud() {
+    H.day = null; hudMark();
+    if (!hudIsOpen()) return;
+    hud.classList.remove('open'); hud.inert = true; hud.style.transform = ''; $('#hist').style.setProperty('--hud-h', '0px');
+  }
+  hud.addEventListener('click', (e) => {
+    const del = e.target.closest('[data-del]');
+    if (e.target.closest('[data-hud="close"]')) closeHud();
+    else if (del && confirm('¿Eliminar esta carga? No se puede deshacer.')) { S.charges = S.charges.filter((c) => c.id !== Number(del.dataset.del)); persist(); renderAll(); }
+  });
+  (function swipeDownToClose() { // arrastrar la barra del panel hacia abajo lo cierra
+    let y0 = null, dy = 0;
+    hud.addEventListener('pointerdown', (e) => { if (!e.target.closest('.hud-bar') || e.target.closest('button')) return; y0 = e.clientY; dy = 0; try { hud.setPointerCapture(e.pointerId); } catch (_) {} hud.classList.add('drag'); });
+    hud.addEventListener('pointermove', (e) => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); hud.style.transform = `translateY(${dy}px)`; });
+    const end = () => { if (y0 == null) return; y0 = null; hud.classList.remove('drag'); if (dy > 70) closeHud(); else hud.style.transform = ''; };
+    hud.addEventListener('pointerup', end); hud.addEventListener('pointercancel', end);
+  })();
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && hudIsOpen()) { closeHud(); e.stopImmediatePropagation(); } }, true); // Escape cierra primero el panel
 
-  function renderList() { $('#hist').innerHTML = calHtml(); }
-  const calGo = (k) => { const d = new Date(H.y, H.m + k, 1); H.y = d.getFullYear(); H.m = d.getMonth(); H.day = undefined; H.dir = k; renderList(); };
+  function renderList() { $('#hist').innerHTML = calHtml(); if (hudIsOpen()) openHud(); }
+  const calGo = (k) => { const d = new Date(H.y, H.m + k, 1); H.y = d.getFullYear(); H.m = d.getMonth(); H.day = undefined; H.dir = k; closeHud(); renderList(); };
   $('#hist').addEventListener('click', (e) => {
-    const f = e.target.closest('[data-f]'), del = e.target.closest('[data-del]'), nav = e.target.closest('[data-nav]'), day = e.target.closest('[data-d]');
-    if (f) { H.f = f.dataset.f; renderList(); }
-    else if (del) {
-      if (confirm('¿Eliminar esta carga? No se puede deshacer.')) { S.charges = S.charges.filter((c) => c.id !== Number(del.dataset.del)); persist(); renderAll(); }
-    } else if (nav) calGo(Number(nav.dataset.nav));
-    else if (day) { // elegir un día: cambia la selección y el detalle, no la grilla
-      H.day = Number(day.dataset.d);
-      $('#hist').querySelectorAll('.day').forEach((b) => b.setAttribute('aria-pressed', b === day));
-      $('#caldet').innerHTML = calDetail();
-    }
+    const f = e.target.closest('[data-f]'), nav = e.target.closest('[data-nav]'), day = e.target.closest('[data-d]');
+    if (f) { closeHud(); H.f = f.dataset.f; renderList(); }
+    else if (nav) calGo(Number(nav.dataset.nav));
+    else if (day) { // un toque en un día abre su panel; otro toque en el mismo lo cierra
+      const d = Number(day.dataset.d);
+      if (hudIsOpen() && H.day === d) closeHud(); else { H.day = d; openHud(); }
+    } else if (hudIsOpen()) closeHud();
   });
   (function swipeMonths() { // deslizar el calendario cambia de mes
     let x0 = null, y0 = 0;
@@ -1351,7 +1511,6 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function renderGasto() {
     const now = new Date(), p = period(now), cmp = p.cmp;
     const s = L.statsBetween(S.charges, p.from, p.end);
-    const m6 = L.monthlyTotals(S.charges, now, 6), mx = Math.max(...m6.map((x) => x.total), 1);
     const saved = S.charges.filter((c) => new Date(c.startAt) >= p.from).reduce((a, c) => a + (c.location === 'home' ? L.valleSavings(c, S.rates) : 0), 0);
     const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
     let h = `<div class="seg wide" role="group" aria-label="Período"><button data-gp="30d" aria-pressed="${gPeriod === '30d'}">30 días</button><button data-gp="mes" aria-pressed="${gPeriod === 'mes'}">Este mes</button></div>`;
@@ -1364,7 +1523,6 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     h += `<div class="kv"><span>Pública<em>${int(s.publicKwh)} kWh · ${pct(s.publicKwh, s.kwh)}% de la energía</em></span><b>${money(s.publicCost)}</b></div>`;
     h += `<h3>En Casa, por franja</h3>` + (s.homeKwh > 0 ? bands(s.vallePct, s.llanoPct, s.puntaPct) : '<p class="note">Sin cargas en casa este mes.</p>');
     if (saved > 1) h += `<p class="note">Cargando todo en Valle hubieras gastado ${money(saved)} menos en este período.</p>`;
-    h += `<h3>Últimos 6 meses</h3><div class="bars">${m6.map((x, i) => `<div class="${i === 5 ? 'on' : ''}"><i style="height:${Math.round((x.total / mx) * 60)}px" title="${money(x.total)}"></i>${MONTHS[x.month].slice(0, 3)}</div>`).join('')}</div>`;
     $('#gasto').innerHTML = h;
   }
 
@@ -1426,7 +1584,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const real = S.charges.length - sampleCount(), d = S.lastBackup && new Date(S.lastBackup);
     let h = '<h3>Respaldo</h3>' + lrow('import', 'Importar respaldo', 'De la app vieja o de esta', 'nav');
     h += lrow('export', 'Exportar respaldo', `${nCargas(real)} · ${d ? `último ${shortDate(d)}, ${hhmm(d)}` : 'todavía no hiciste uno'}`);
-    h += '<h3>Personalización</h3>' + lrow('fichas', 'Fichas', 'Color, borde y anillo de cada círculo', 'nav');
+    h += '<h3>Personalización</h3>' + lrow('fichas', 'Fichas', 'Color, textura, borde y anillo de cada círculo', 'nav') + lrow('fondo', 'Fondo', 'Tinte, textura y movimiento', 'nav');
     h += '<h3>Datos</h3>';
     if (sampleCount()) h += lrow('samples', 'Quitar datos de ejemplo', `${nCargas(sampleCount())} de muestra`);
     h += lrow('wipe', 'Borrar todos los datos', 'Cargas, auto, tarifas y cargador', 'danger');
@@ -1436,7 +1594,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   /** Las cargas propias (sin los datos de ejemplo) y lo que hace falta para rearmar la app en otro teléfono. */
   function buildBackup() {
-    return { app: 'carga', version: 1, exportedAt: new Date().toISOString(), vehicle: S.vehicle, rates: S.rates, puntaStart: S.puntaStart, amps: S.amps, volts: S.volts, chips: S.chips,
+    return { app: 'carga', version: 1, exportedAt: new Date().toISOString(), vehicle: S.vehicle, rates: S.rates, puntaStart: S.puntaStart, amps: S.amps, volts: S.volts, chips: S.chips, bg: S.bg,
       charges: S.charges.filter((c) => !c.sample).map(({ id, sample, ...c }) => c) };
   }
   /** En iPhone se comparte el archivo (Guardar en Archivos, AirDrop…); donde no se puede, se descarga. */
@@ -1463,6 +1621,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const a = b.dataset.aj; ajMsg = null;
     if (a === 'import') openFn('importar');
     else if (a === 'fichas') openFn('fichas');
+    else if (a === 'fondo') openFn('fondo');
     else if (a === 'export') exportBackup();
     else if (a === 'samples') {
       if (!confirm('¿Quitar las cargas de ejemplo? Las tuyas se quedan.')) return;
@@ -1470,8 +1629,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       ajMsg = { text: 'Datos de ejemplo quitados.', kind: 'ok' }; renderAll();
     } else if (a === 'wipe') {
       if (!confirm('¿Borrar todas las cargas y volver a los valores iniciales? Las fichas se quedan como están. No se puede deshacer.')) return;
-      const keep = S.chips; // S se vacía en el lugar: otras partes de la app guardan la misma referencia
-      Object.keys(S).forEach((k) => delete S[k]); Object.assign(S, DEFAULTS(), { chips: keep });
+      const keep = { chips: S.chips, bg: S.bg }; // S se vacía en el lugar: otras partes de la app guardan la misma referencia
+      Object.keys(S).forEach((k) => delete S[k]); Object.assign(S, DEFAULTS(), keep);
       confirmAt = null; confirmShown = false; persist(); clearDraft(); renderStatus();
       ajMsg = { text: 'Listo, la app quedó vacía.', kind: 'ok' }; renderAll();
     }
@@ -1498,6 +1657,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       if (b.puntaStart) h += row('Franja Punta', `${b.puntaStart}:00 a ${b.puntaStart + 4}:00`);
       if (b.charger) h += row('Cargador de casa', `${fmtNum(b.charger.amps, 0, 1)} A · ${fmtNum(b.charger.volts, 0, 1)} V`);
       if (b.chips) h += row('Diseño de las fichas', 'Sí');
+      if (b.bg) h += row('Fondo', 'Sí');
       if (b.ignored.length) h += `<p class="note">Se deja afuera: ${b.ignored.join(', ')}.</p>`;
       if (real > 0 && n) {
         h += '<h3>Qué hacer con tus cargas</h3>' + `<div class="seg wide" role="group">${[['merge', 'Sumar a las mías'], ['replace', 'Reemplazar']].map(([v, l]) => `<button data-imp="mode" data-v="${v}" aria-pressed="${v === mode}">${l}</button>`).join('')}</div>`;
@@ -1516,6 +1676,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     if (b.puntaStart) S.puntaStart = b.puntaStart;
     if (b.charger) { S.amps = b.charger.amps; S.volts = b.charger.volts; }
     if (b.chips) { S.chips = cleanChips(b.chips); homeRail.refresh(); paintGo(); }
+    if (b.bg) S.bg = cleanBg(b.bg);
+    if (b.chips || b.bg) bgApply();
     persist(); IMP = { b: null, mode: 'merge', err: null };
     while (stack.length) closeFn();
     renderAll();
@@ -1542,6 +1704,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     let h = `<div class="fx-prev">${chipSvg(fxSel)}</div><p class="fx-name">${FUNCS.find((f) => f.id === fxSel).name}</p>`;
     h += `<div class="fx-pick" role="group" aria-label="Elegir ficha">${FUNCS.map((f) => `<button data-fx="sel" data-v="${f.id}" aria-label="${f.name}" aria-pressed="${f.id === fxSel}">${chipSvg(f.id)}</button>`).join('')}</div>`;
     h += `<div class="fx-sec"><h3>Color</h3><div class="fx-sw" role="group" aria-label="Color">${CHIP_COLORS.map(([hex, n]) => `<button data-fx="color" data-v="${hex}" aria-label="${n}" aria-pressed="${hex === c.color}"><i style="background:${hex}"></i></button>`).join('')}</div></div>`;
+    h += `<div class="fx-sec"><h3>Textura</h3><div class="fx-tex" role="group" aria-label="Textura">${CHIP_TEXTURES.map(([id, n]) => `<button data-fx="tex" data-v="${id}" aria-pressed="${id === c.tex}"><i><svg class="chip" viewBox="0 0 126 126" aria-hidden="true" style="--cc:${c.color};--ce:${c.tone === 'oscuro' ? '#1a1a1c' : '#fff'}"><circle class="body" cx="63" cy="63" r="63"/>${texSvg(id)}<circle class="rim" cx="63" cy="63" r="62"/></svg></i>${n}</button>`).join('')}</div></div>`;
     h += `<div class="fx-sec"><h3>Borde</h3>${fxSeg('edge', CHIP_EDGES, c.edge)}</div>`;
     h += `<div class="fx-sec"><h3>Tono del borde</h3>${fxSeg('tone', [['claro', 'Claro'], ['oscuro', 'Oscuro']], c.tone)}</div>`;
     h += `<div class="fx-sec"><h3>Anillo interior</h3>${fxSeg('ring', [['1', 'Con anillo'], ['0', 'Sin anillo']], c.ring ? '1' : '0')}</div>`;
@@ -1556,7 +1719,29 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     else if (k === 'all') FUNCS.forEach((f) => (S.chips[f.id] = { ...c }));
     else if (k === 'reset') S.chips[fxSel] = chipDefault();
     else if (k in c) c[k] = k === 'ring' ? v === '1' : v;
-    persist(); homeRail.refresh(); paintGo(); renderFichas();
+    persist(); homeRail.refresh(); paintGo(); bgApply(); renderFichas();
+  });
+
+  /* ----- Fondo ----- */
+  const bgSeg = (k, items, sel) => `<div class="seg wide" role="group">${items.map(([v, l]) => `<button data-bg="${k}" data-v="${v}" aria-pressed="${String(sel) === v}">${l}</button>`).join('')}</div>`;
+  function renderFondo() {
+    const b = S.bg, y = $('#fondo').scrollTop;
+    const tint = b.tint === 'color' ? b.color : b.tint === 'ficha' ? S.chips[CHIP_IDS[homeRail.index]].color : null;
+    const ground = tint ? hexMix('#000000', tint, 0.14) : '#1c1c1e'; // las muestras de textura se ven sobre el fondo que quedaría
+    let h = `<div class="fx-sec"><h3>Tinte</h3>${bgSeg('tint', BG_TINTS, b.tint)}`;
+    if (b.tint === 'color') h += `<div class="fx-sw" role="group" aria-label="Color del tinte" style="margin-top:10px">${CHIP_COLORS.map(([hex, n]) => `<button data-bg="color" data-v="${hex}" aria-label="${n}" aria-pressed="${hex === b.color}"><i style="background:${hex}"></i></button>`).join('')}</div>`;
+    h += '</div>';
+    h += `<div class="fx-sec"><h3>Textura</h3><div class="fx-tex" role="group" aria-label="Textura">${CHIP_TEXTURES.map(([id, n]) => `<button data-bg="tex" data-v="${id}" aria-pressed="${id === b.tex}"><i><svg class="chip" viewBox="0 0 126 126" aria-hidden="true" style="--cc:${ground};--ce:#fff"><circle class="body" cx="63" cy="63" r="63"/>${texSvg(id)}<circle class="rim" cx="63" cy="63" r="62"/></svg></i>${n}</button>`).join('')}</div></div>`;
+    h += `<div class="fx-sec"><h3>Movimiento</h3>${bgSeg('motion', [['1', 'Sutil'], ['0', 'Quieto']], b.motion ? '1' : '0')}`;
+    if (reduceMotion.matches) h += '<p class="note">Tenés activado «Reducir movimiento» en el teléfono: el fondo queda quieto.</p>';
+    h += '</div><button class="link ghost" data-bg="reset">Restablecer fondo</button>';
+    $('#fondo').innerHTML = h; $('#fondo').scrollTop = y;
+  }
+  $('#fondo').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-bg]'); if (!t) return;
+    const k = t.dataset.bg, v = t.dataset.v;
+    S.bg = cleanBg(k === 'reset' ? null : { ...S.bg, [k]: k === 'motion' ? v === '1' : v });
+    persist(); bgApply(); renderFondo();
   });
 
   /* ---------- Render general ---------- */
@@ -1570,12 +1755,11 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   }
 
   /* ---------- Arranque ---------- */
-  function fit() {
-    if (innerWidth < 600) { phone.style.transform = ''; return; }
-    phone.style.transform = `scale(${Math.min(1, (innerHeight - 32) / 874)})`;
-  }
-  addEventListener('resize', fit);
-  fit(); renderAll(); renderStatus(); renderDraft(); homeRail.paint(); loadNetworks();
+  /* Sin zoom por gestos (iOS ignora user-scalable=no, por eso también se frenan aparte): pellizco, doble toque y Ctrl + rueda. */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  renderAll(); renderStatus(); renderDraft(); homeRail.paint(); loadNetworks();
   window.__carga = { S, L, openFn, closeFn };
 })();
 </script>

@@ -252,15 +252,6 @@
     return { cur, prev, deltaPct: prev > 0 ? ((cur - prev) / prev) * 100 : null };
   }
 
-  function monthlyTotals(charges, now, n = 6) {
-    const out = [];
-    for (let i = n - 1; i >= 0; i--) {
-      const a = startOfMonth(now, i), b = startOfMonth(now, i - 1);
-      out.push({ month: a.getMonth(), total: statsBetween(charges, a, b).total });
-    }
-    return out;
-  }
-
   /* ================= Precios de cargadores públicos (evuruguay.com) ================= */
 
   /** Snapshot del CSV del 2026-11-03 (red de resguardo si no hay conexión ni caché). */
@@ -420,6 +411,7 @@
       kind: own ? 'carga' : 'carga-ev', exportedAt: toIso(data.exportedAt), charges, skipped, vehicle, rates,
       puntaStart: PUNTA_START_OPTIONS.includes(ps) ? ps : null, charger: amps > 0 && volts > 0 ? { amps, volts } : null,
       chips: own && data.chips && typeof data.chips === 'object' ? data.chips : null,
+      bg: own && data.bg && typeof data.bg === 'object' ? data.bg : null,
       ignored: own ? [] : ['tema y colores', 'personalización visual', 'notificaciones', 'ubicación de casa', 'carga en curso y borradores'],
     };
   }
@@ -448,7 +440,7 @@
     classifyHour, isHoliday, chargerKw, taperFactor, estimateAtTime, minutesToDeliver, computeCalibration,
     computeHomeChargeCost, computePublicChargeCost, kwhFromPct, valleSavings, suggestStart,
     whKmToKwh100, autonomyKm, rangeAtPct, realConsumption, rangeConsumption,
-    statsBetween, compareToPrevMonth, monthlyTotals, startOfMonth,
+    statsBetween, compareToPrevMonth, startOfMonth,
     FALLBACK_NETWORK_ROWS, parseCsv, parseTimeRange, groupNetworkRows, pickVariant, rankNetworks,
   };
 });
