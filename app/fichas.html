@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carga">
+<meta name="theme-color" content="#000000">
+<title>Carga</title>
+<style>
+:root {
+  --bg: #000;
+  --sheet: #141414;
+  --chip: #262629;
+  --ink: #fff;
+  --ink-2: #8e8e93;
+  --accent: #4fb58a;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); overscroll-behavior: none; }
+body {
+  display: grid; place-items: center;
+  font-family: var(--font); color: var(--ink);
+  -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none;
+  font-variant-numeric: tabular-nums; touch-action: manipulation;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+ul { list-style: none; }
+
+/* ---------- Teléfono ---------- */
+.phone {
+  position: relative; width: 100%; height: 100dvh; overflow: hidden; background: var(--bg);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.probe { position: absolute; visibility: hidden; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+@media (min-width: 600px) {
+  body { background: #0b0b0b; height: 100vh; }
+  .phone {
+    width: 402px; height: 874px; border-radius: 56px; transform-origin: center;
+    outline: 10px solid #1a1a1a;
+    --safe-top: 59px; --safe-bottom: 34px;
+  }
+  .phone::before {
+    content: ""; position: absolute; z-index: 60; top: 11px; left: 50%; width: 126px; height: 37px;
+    margin-left: -63px; border-radius: 20px; background: #000; pointer-events: none;
+  }
+}
+
+/* ---------- Inicio ---------- */
+.home { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.home-bar { padding: calc(var(--safe-top) + 14px) 24px 0; text-align: center; font-size: 17px; }
+.home-bar span { color: var(--ink-2); }
+.stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px calc(262px + var(--safe-bottom) - 24px); }
+.head { font-size: min(56px, 14vw); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-align: center; }
+.head span { display: block; }
+
+.tray {
+  position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; height: calc(262px + var(--safe-bottom));
+  background: var(--sheet); border-radius: 44px 44px 0 0;
+}
+.pointer { position: absolute; top: 22px; left: 50%; margin-left: -10px; }
+.rail {
+  position: absolute; top: 40px; left: 0; right: 0; height: 140px; display: flex; align-items: center;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail::before, .rail::after { content: ""; flex: 0 0 calc(50% - 50px); }
+.rail.mouse-drag { scroll-snap-type: none; cursor: grabbing; }
+.slot { flex: none; width: 100px; height: 140px; display: grid; place-items: center; scroll-snap-align: center; scroll-snap-stop: always; }
+.slot .c {
+  --k: 0; width: 126px; height: 126px; border-radius: 50%; display: grid; place-items: center; will-change: transform;
+  background: color-mix(in srgb, var(--accent) calc(var(--k) * 100%), var(--chip));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, calc(0.06 + var(--k) * 0.16));
+  color: color-mix(in srgb, #fff calc(var(--k) * 100%), #a0a0a5);
+}
+.slot svg { width: 54px; height: 54px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.hint { position: absolute; top: 196px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--ink-2); }
+
+/* ---------- Funciones ---------- */
+.fn {
+  position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg);
+  opacity: 0; visibility: hidden; transform: translateY(20px);
+  transition: opacity 200ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s 240ms;
+}
+.fn.open { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease-out), transform 360ms var(--ease-drawer), visibility 0s; }
+.fn-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) 16px 0; flex: none; }
+.fn-bar h2 { font-size: 17px; font-weight: 600; text-align: center; }
+.icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-2); transition: transform 140ms var(--ease-out); }
+.icon:active { transform: scale(0.94); }
+.icon svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fn-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 40px; text-align: center; }
+.scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 8px 24px calc(var(--safe-bottom) + 24px); }
+.scroll::-webkit-scrollbar { display: none; }
+
+.month { margin: 22px 0 6px; font-size: 13px; color: var(--ink-2); }
+.month:first-child { margin-top: 6px; }
+.row { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; height: 64px; }
+.row .d { font-size: 15px; color: var(--ink-2); }
+.row b { display: block; font-size: 17px; font-weight: 500; }
+.row i { display: block; margin-top: 3px; font-size: 13px; font-style: normal; color: var(--ink-2); }
+.row .c { font-size: 17px; text-align: right; }
+
+.big { font-size: min(72px, 18vw); font-weight: 300; letter-spacing: -0.04em; line-height: 1; }
+.big .cur { font-size: 0.46em; margin-right: 0.1em; color: var(--ink-2); letter-spacing: 0; vertical-align: top; position: relative; top: 0.12em; }
+.sub { margin-top: 16px; font-size: 17px; }
+.find { margin-top: 8px; max-width: 280px; font-size: 15px; line-height: 1.35; color: var(--ink-2); text-wrap: balance; }
+.split { width: 100%; margin-top: 40px; text-align: left; }
+.part { margin-top: 22px; }
+.part div { display: flex; justify-content: space-between; font-size: 17px; }
+.part span { color: var(--ink-2); font-size: 15px; }
+.bar { height: 6px; margin-top: 10px; border-radius: 3px; background: #1c1c1e; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; background: var(--ink); transition: width 360ms var(--ease-out); }
+
+.price { display: flex; align-items: center; justify-content: space-between; height: 104px; }
+.price b { display: block; font-size: 22px; font-weight: 500; }
+.price em { display: block; margin-top: 4px; font-style: normal; font-size: 14px; color: var(--ink-2); }
+.step { display: flex; align-items: center; }
+.step button { width: 44px; height: 44px; border-radius: 50%; background: var(--chip); font-size: 24px; font-weight: 300; line-height: 44px; transition: transform 140ms var(--ease-out); }
+.step button:active { transform: scale(0.94); }
+.step output { min-width: 96px; text-align: center; font-size: 28px; font-weight: 300; }
+.note { padding: 0 4px; font-size: 14px; line-height: 1.4; color: var(--ink-2); }
+
+/* Registrar carga */
+.seg { justify-self: center; display: flex; padding: 3px; border-radius: 999px; background: #151517; }
+.seg button { position: relative; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 15px; color: var(--ink-2); transition: background-color 160ms ease, color 160ms ease; }
+.seg button::before { content: ""; position: absolute; inset: -4px 0; }
+.seg button[aria-pressed="true"] { background: #2c2c2e; color: var(--ink); }
+.value { display: flex; align-items: baseline; gap: 10px; }
+.value .num { font-size: 104px; font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
+.value .unit { font-size: 26px; color: var(--ink-2); }
+.value-input { width: 260px; background: none; border: 0; text-align: center; color: var(--ink); caret-color: var(--accent); font: inherit; font-size: 104px; font-weight: 200; letter-spacing: -0.04em; line-height: 1; -webkit-user-select: text; user-select: text; }
+.meta { margin-top: 18px; font-size: 17px; color: var(--ink-2); }
+.tray2 { position: relative; flex: none; height: calc(262px + var(--safe-bottom)); background: var(--sheet); border-radius: 44px 44px 0 0; }
+.chip-n { font-size: 46px; font-weight: 300; letter-spacing: -0.02em; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="phone" id="phone">
+  <div class="probe" id="probe"></div>
+
+  <section class="home" id="home" aria-label="Inicio">
+    <p class="home-bar"><b id="topTotal" style="font-weight:400">$ 0</b> <span>· 30 días</span></p>
+    <div class="stage"><h1 class="head" id="head" aria-live="polite"></h1></div>
+    <div class="tray">
+      <svg class="pointer" width="20" height="10" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 0h20L10 10z" fill="#fff"/></svg>
+      <div class="rail" id="rail"></div>
+      <p class="hint">Tocá la ficha del centro</p>
+    </div>
+  </section>
+
+  <!-- Registrar carga -->
+  <section class="fn" id="fn-cargar" aria-label="Registrar carga" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M5 5l12 12M17 5L5 17"/></svg></button>
+      <div class="seg" role="group" aria-label="Dónde cargaste">
+        <button data-kind="casa" aria-pressed="true">Casa</button>
+        <button data-kind="publica" aria-pressed="false">Pública</button>
+      </div>
+      <span></span>
+    </header>
+    <div class="fn-body">
+      <div class="center">
+        <button class="value" id="valueBtn" aria-label="Escribir kWh exactos"><span class="num" id="valNum">25</span><span class="unit">kWh</span></button>
+        <input class="value-input" id="valInput" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="kWh cargados" hidden>
+        <p class="meta" id="meta"></p>
+      </div>
+      <div class="tray2">
+        <svg class="pointer" width="20" height="10" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 0h20L10 10z" fill="#fff"/></svg>
+        <div class="rail" id="kRail"></div>
+        <p class="hint">Tocá el centro para guardar</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Historial -->
+  <section class="fn" id="fn-historial" aria-label="Historial" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Historial</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="list"></div></div>
+  </section>
+
+  <!-- Gasto -->
+  <section class="fn" id="fn-gasto" aria-label="Gasto" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Últimos 30 días</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="center">
+      <p class="big"><span class="cur">$</span><span id="gTotal">0</span></p>
+      <p class="sub" id="gSub"></p>
+      <p class="find" id="gFind"></p>
+      <div class="split" id="gSplit"></div>
+    </div></div>
+  </section>
+
+  <!-- Precios -->
+  <section class="fn" id="fn-precios" aria-label="Precios" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Precio por kWh</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll">
+      <div class="price"><div><b>Casa</b><em>por kWh</em></div><div class="step"><button data-p="casa" data-d="-5" aria-label="Bajar precio de casa">−</button><output id="p-casa"></output><button data-p="casa" data-d="5" aria-label="Subir precio de casa">+</button></div></div>
+      <div class="price"><div><b>Pública</b><em>por kWh</em></div><div class="step"><button data-p="publica" data-d="-5" aria-label="Bajar precio público">−</button><output id="p-publica"></output><button data-p="publica" data-d="5" aria-label="Subir precio público">+</button></div></div>
+      <p class="note">Se usa para calcular el costo de las cargas nuevas. Las que ya registraste no cambian.</p>
+    </div></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const phone = $('#phone');
+
+  /* ---------- Datos (de ejemplo) ---------- */
+  // Fecha fija para que los datos de ejemplo cierren; en la app real: new Date()
+  const TODAY = new Date(2026, 10, 2);
+  const DAY = 864e5;
+  const SEED = [
+    ['2026-11-01', 'casa', 22.4, 95], ['2026-10-28', 'publica', 38.0, 310], ['2026-10-24', 'casa', 31.0, 95],
+    ['2026-10-19', 'casa', 27.5, 95], ['2026-10-14', 'publica', 18.2, 310], ['2026-10-09', 'casa', 34.8, 95],
+    ['2026-10-05', 'casa', 29.1, 95], ['2026-09-30', 'casa', 26.0, 95], ['2026-09-24', 'publica', 41.5, 310],
+    ['2026-09-19', 'casa', 30.2, 95],
+  ].map(([date, kind, kwh, ppk], i) => ({ id: i + 1, date, kind, kwh, ppk }));
+
+  const KEY = 'carga.v2';
+  let entries = SEED, prices = { casa: 95, publica: 310 };
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.entries) && s.entries.length) { entries = s.entries; prices = s.prices || prices; }
+  } catch (_) {}
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ entries, prices })); } catch (_) {} };
+
+  /* ---------- Formato ---------- */
+  const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const int = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const dec = (n) => n.toFixed(1).replace('.', ',');
+  const kwhTxt = (n) => dec(n).replace(',0', '');
+  const cost = (e) => Math.round(e.kwh * e.ppk);
+  const short = (d) => `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+  const kindLabel = { casa: 'Casa', publica: 'Pública' };
+
+  function stats() {
+    const win = entries.filter((e) => (TODAY - parse(e.date)) / DAY < 30);
+    const part = (kind) => {
+      const l = win.filter((e) => e.kind === kind);
+      return { kwh: l.reduce((a, e) => a + e.kwh, 0), cost: l.reduce((a, e) => a + cost(e), 0) };
+    };
+    const casa = part('casa'), publica = part('publica');
+    return { casa, publica, n: win.length, kwh: casa.kwh + publica.kwh, total: casa.cost + publica.cost };
+  }
+
+  /* ---------- Render de cada función ---------- */
+  function renderAll() {
+    const s = stats();
+    $('#topTotal').textContent = `$ ${int(s.total)}`;
+
+    // Gasto
+    $('#gTotal').textContent = int(s.total);
+    $('#gSub').textContent = `${int(s.kwh)} kWh · ${s.n} ${s.n === 1 ? 'carga' : 'cargas'}`;
+    $('#gFind').textContent = s.publica.kwh > 0 && s.casa.kwh > 0
+      ? `Las cargas públicas fueron el ${Math.round((s.publica.kwh / s.kwh) * 100)}% de los kWh y el ${Math.round((s.publica.cost / s.total) * 100)}% del gasto.` : '';
+    const row = (name, p) => `<div class="part"><div><b style="font-weight:500">${name}</b><b style="font-weight:400">$ ${int(p.cost)}</b></div><div><span>${int(p.kwh)} kWh</span><span>${s.total ? Math.round((p.cost / s.total) * 100) : 0}%</span></div><div class="bar"><i style="width:${s.total ? (p.cost / s.total) * 100 : 0}%"></i></div></div>`;
+    $('#gSplit').innerHTML = row('Casa', s.casa) + row('Pública', s.publica);
+
+    // Historial
+    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    const groups = new Map();
+    for (const e of sorted) {
+      const m = MONTHS[parse(e.date).getMonth()];
+      if (!groups.has(m)) groups.set(m, []);
+      groups.get(m).push(e);
+    }
+    const li = (e) => `<li class="row"><span class="d">${short(parse(e.date))}</span><span><b>${dec(e.kwh)} kWh</b><i>${kindLabel[e.kind]} · $ ${int(e.ppk)}/kWh</i></span><span class="c">$ ${int(cost(e))}</span></li>`;
+    $('#list').innerHTML = [...groups].map(([m, rows]) => `<p class="month">${m[0].toUpperCase() + m.slice(1)}</p><ul>${rows.map(li).join('')}</ul>`).join('');
+
+    // Precios
+    $('#p-casa').textContent = `$ ${int(prices.casa)}`;
+    $('#p-publica').textContent = `$ ${int(prices.publica)}`;
+  }
+
+  /* ---------- Bandeja de fichas (inicio) ---------- */
+  const ICONS = {
+    cargar: '<path d="M13.5 3L5.5 14h6l-1 7 8-11h-6l1-7z"/>',
+    historial: '<path d="M5 7h14M5 12h14M5 17h9"/>',
+    gasto: '<path d="M5 19V10M12 19V5M19 19v-7"/>',
+    precios: '<path d="M4 12.5V5h7.5L20 13.5 13.5 20 4 12.5z"/><circle cx="8.2" cy="9.2" r="1.2"/>',
+  };
+  const FUNCS = [
+    { id: 'cargar', name: 'Registrar carga', head: ['Registrar', 'carga'] },
+    { id: 'historial', name: 'Historial', head: ['Ver', 'historial'] },
+    { id: 'gasto', name: 'Gasto', head: ['Cuánto', 'gasté'] },
+    { id: 'precios', name: 'Precios', head: ['Cambiar', 'precios'] },
+  ];
+  const SLOT = 100;
+  const rail = $('#rail');
+  rail.innerHTML = FUNCS.map((f, i) => `<button class="slot" data-i="${i}" aria-label="${f.name}"><span class="c"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[f.id]}</svg></span></button>`).join('');
+  const slots = [...rail.querySelectorAll('.slot')], discs = slots.map((s) => s.firstElementChild);
+  let idx = 0, raf = 0;
+
+  function setHead(i) { $('#head').innerHTML = FUNCS[i].head.map((w) => `<span>${w}</span>`).join(''); }
+  function paintRail() {
+    const c = rail.scrollLeft;
+    for (let i = 0; i < FUNCS.length; i++) {
+      const k = Math.max(0, 1 - Math.abs(i * SLOT - c) / SLOT);
+      discs[i].style.transform = `scale(${(0.52 + 0.48 * (k * k * (3 - 2 * k))).toFixed(3)})`;
+      discs[i].style.setProperty('--k', k.toFixed(3));
+      slots[i].style.zIndex = Math.round(k * 10);
+    }
+    const n = Math.max(0, Math.min(FUNCS.length - 1, Math.round(c / SLOT)));
+    if (n !== idx) { idx = n; setHead(n); }
+  }
+  rail.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paintRail); }, { passive: true });
+  attachMouseDrag(rail, SLOT);
+  rail.addEventListener('click', (e) => {
+    if (rail._dragged) return;
+    const slot = e.target.closest('.slot'); if (!slot) return;
+    const i = +slot.dataset.i;
+    if (i === Math.round(rail.scrollLeft / SLOT)) openFn(FUNCS[i].id);
+    else rail.scrollTo({ left: i * SLOT, behavior: 'smooth' });
+  });
+
+  // Arrastrar con mouse (vista previa en escritorio)
+  function attachMouseDrag(el, slot) {
+    let md = null;
+    el.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: el.scrollLeft, moved: false }; });
+    addEventListener('pointermove', (e) => {
+      if (!md) return;
+      const dx = e.clientX - md.x;
+      if (!md.moved && Math.abs(dx) > 5) { md.moved = true; el.classList.add('mouse-drag'); }
+      if (md.moved) el.scrollLeft = md.l - dx;
+    });
+    addEventListener('pointerup', () => {
+      if (!md) return;
+      const m = md; md = null;
+      if (!m.moved) return;
+      el.classList.remove('mouse-drag');
+      el._dragged = true; setTimeout(() => (el._dragged = false), 0);
+      el.scrollTo({ left: Math.round(el.scrollLeft / slot) * slot, behavior: 'smooth' });
+    });
+  }
+
+  /* ---------- Abrir y cerrar funciones ---------- */
+  let current = null;
+  function openFn(id) {
+    current = $('#fn-' + id);
+    if (id === 'cargar') initCargar();
+    renderAll();
+    current.inert = false; current.classList.add('open');
+    $('#home').inert = true;
+    if (id === 'cargar') { scrollK(kState.idx, false); paintK(); }
+  }
+  function closeFn() {
+    if (!current) return;
+    current.classList.remove('open'); current.inert = true; current = null;
+    $('#home').inert = false;
+  }
+  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closeFn));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFn(); });
+
+  /* ---------- Precios ---------- */
+  document.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.p;
+    prices[k] = Math.min(2000, Math.max(5, prices[k] + Number(b.dataset.d)));
+    persist(); renderAll();
+  }));
+
+  /* ---------- Registrar carga ---------- */
+  const KVALUES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80];
+  const kRail = $('#kRail');
+  const kState = { kind: 'casa', kwh: 25, custom: false, idx: 4 };
+  kRail.innerHTML = KVALUES.map((v, i) => `<button class="slot" data-i="${i}" aria-label="${v} kWh"><span class="c"><span class="chip-n">${v}</span></span></button>`).join('');
+  const kSlots = [...kRail.querySelectorAll('.slot')], kDiscs = kSlots.map((s) => s.firstElementChild), kLabels = kDiscs.map((c) => c.firstElementChild);
+  let prog = false, progTimer = 0, kRaf = 0;
+
+  function scrollK(i, smooth) {
+    prog = true; clearTimeout(progTimer);
+    progTimer = setTimeout(() => (prog = false), smooth ? 700 : 80);
+    kRail.scrollTo({ left: i * SLOT, behavior: smooth ? 'smooth' : 'instant' });
+  }
+  const paintKLabels = () => kLabels.forEach((n, i) => (n.textContent = kState.custom && i === kState.idx ? kwhTxt(kState.kwh) : KVALUES[i]));
+  function paintKValue() {
+    $('#valNum').textContent = kwhTxt(kState.kwh);
+    const ppk = prices[kState.kind];
+    $('#meta').textContent = `$ ${int(kState.kwh * ppk)} · $ ${int(ppk)} por kWh`;
+  }
+  function paintK() {
+    const c = kRail.scrollLeft;
+    for (let i = 0; i < KVALUES.length; i++) {
+      const k = Math.max(0, 1 - Math.abs(i * SLOT - c) / SLOT);
+      kDiscs[i].style.transform = `scale(${(0.52 + 0.48 * (k * k * (3 - 2 * k))).toFixed(3)})`;
+      kDiscs[i].style.setProperty('--k', k.toFixed(3));
+      kSlots[i].style.zIndex = Math.round(k * 10);
+    }
+    const n = Math.max(0, Math.min(KVALUES.length - 1, Math.round(c / SLOT)));
+    if (n !== kState.idx) {
+      kState.idx = n;
+      if (!prog) { kState.custom = false; kState.kwh = KVALUES[n]; paintKValue(); }
+      paintKLabels();
+    } else if (!prog && kState.custom && Math.abs(c - n * SLOT) > 8) {
+      kState.custom = false; kState.kwh = KVALUES[n]; paintKValue(); paintKLabels();
+    }
+  }
+  kRail.addEventListener('scroll', () => { cancelAnimationFrame(kRaf); kRaf = requestAnimationFrame(paintK); }, { passive: true });
+  attachMouseDrag(kRail, SLOT);
+  kRail.addEventListener('click', (e) => {
+    if (kRail._dragged) return;
+    const slot = e.target.closest('.slot'); if (!slot) return;
+    const i = +slot.dataset.i;
+    if (i === Math.round(kRail.scrollLeft / SLOT)) return save();
+    kState.custom = false; kState.kwh = KVALUES[i]; paintKValue(); scrollK(i, true);
+  });
+
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+    kState.kind = b.dataset.kind;
+    document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    paintKValue();
+  }));
+
+  const valueBtn = $('#valueBtn'), valInput = $('#valInput');
+  valueBtn.addEventListener('click', () => {
+    valueBtn.hidden = true; valInput.hidden = false;
+    valInput.value = kwhTxt(kState.kwh); valInput.focus(); valInput.select();
+  });
+  function commitInput() {
+    if (valInput.hidden) return;
+    const v = parseFloat(valInput.value.replace(',', '.'));
+    valInput.hidden = true; valueBtn.hidden = false;
+    if (!isFinite(v) || v <= 0) return;
+    kState.kwh = Math.min(200, Math.round(v * 10) / 10);
+    const near = KVALUES.reduce((b, x, i) => (Math.abs(x - kState.kwh) < Math.abs(KVALUES[b] - kState.kwh) ? i : b), 0);
+    kState.custom = true; kState.idx = near;
+    paintKValue(); paintKLabels(); scrollK(near, true);
+  }
+  valInput.addEventListener('blur', commitInput);
+  valInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') valInput.blur(); });
+
+  function initCargar() {
+    kState.kind = 'casa'; kState.kwh = 25; kState.custom = false; kState.idx = KVALUES.indexOf(25);
+    document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.kind === 'casa'));
+    paintKValue(); paintKLabels();
+  }
+  function save() {
+    entries = [{ id: Date.now(), date: iso(TODAY), kind: kState.kind, kwh: kState.kwh, ppk: prices[kState.kind] }, ...entries];
+    persist(); closeFn(); renderAll();
+  }
+
+  /* ---------- Arranque ---------- */
+  function fit() {
+    if (innerWidth < 600) { phone.style.transform = ''; return; }
+    phone.style.transform = `scale(${Math.min(1, (innerHeight - 32) / 874)})`;
+  }
+  addEventListener('resize', fit);
+  fit(); renderAll(); setHead(0); paintRail();
+})();
+</script>
+</body>
+</html>

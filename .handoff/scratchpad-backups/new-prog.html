@@ -1,0 +1,32 @@
+  <!-- ===== Programar carga ===== -->
+  <section class="fn" id="fn-prog" aria-label="Programar carga" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Programar carga</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll">
+      <div class="hero2"><p class="big" id="pStart">—</p><p class="sub" id="pSub"></p><p class="find" id="pFind"></p></div>
+      <div class="seg wide" role="group" aria-label="Cuándo empieza" id="startSeg"><button data-later="0" aria-pressed="true">Ahora</button><button data-later="1" aria-pressed="false">Más tarde</button></div>
+      <div class="stp2" id="startRow" hidden><div><b>Empieza a las</b><em>hora en que arranca el cargador</em></div>
+        <div class="step2"><button data-t="start" data-d="-60" aria-label="Una hora antes">−1 h</button><button data-t="start" data-d="-15" aria-label="15 minutos antes">−15</button><input class="timein" id="p-start" type="time" aria-label="Hora de inicio"><button data-t="start" data-d="15" aria-label="15 minutos después">+15</button><button data-t="start" data-d="60" aria-label="Una hora después">+1 h</button></div></div>
+      <div class="stp2"><div><b>Corta a las</b><em>hora en que sale el auto</em></div>
+        <div class="step2"><button data-t="stop" data-d="-60" aria-label="Una hora antes">−1 h</button><button data-t="stop" data-d="-15" aria-label="15 minutos antes">−15</button><input class="timein" id="p-stop" type="time" aria-label="Hora de corte"><button data-t="stop" data-d="15" aria-label="15 minutos después">+15</button><button data-t="stop" data-d="60" aria-label="Una hora después">+1 h</button></div></div>
+      <div class="stp2"><div><b>Batería al empezar</b><em>tocá el número para escribirlo, ej. 36,3</em></div>
+        <div class="step2"><button data-s="from" data-d="-1" aria-label="Restar 1">−1</button><button data-s="from" data-d="-0.1" aria-label="Restar 0,1">−0,1</button><input class="stepin" id="o-from" inputmode="decimal" aria-label="Batería al empezar, en porcentaje" autocomplete="off"><button data-s="from" data-d="0.1" aria-label="Sumar 0,1">+0,1</button><button data-s="from" data-d="1" aria-label="Sumar 1">+1</button></div></div>
+      <div class="field"><label for="p-goal">Objetivo % (opcional)</label><input id="p-goal" inputmode="decimal" autocomplete="off" placeholder="Ej. 80: te digo a qué hora empezar"></div>
+      <div class="field"><label for="p-odo">Odómetro de esta carga (km, opcional)</label><input id="p-odo" inputmode="decimal" autocomplete="off" placeholder="Para afinar tu autonomía"></div>
+      <div id="pAlt"></div>
+      <div id="pAuto"></div>
+      <button class="pill" id="pGo">Programar carga</button>
+    </div></div>
+  </section>
+
+  <!-- ===== Carga en curso ===== -->
+  <section class="fn" id="fn-activa" aria-label="Carga en curso" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Carga en curso</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="activa"></div></div>
+  </section>
+

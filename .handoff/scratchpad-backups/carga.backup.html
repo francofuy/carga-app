@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carga">
+<meta name="theme-color" content="#000000">
+<title>Carga</title>
+<style>
+:root {
+  --bg: #000; --sheet: #141414; --chip: #262629; --ink: #fff; --ink-2: #8e8e93; --accent: #4fb58a; --warn: #e5a93b;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); overscroll-behavior: none; }
+body { display: grid; place-items: center; font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; font-variant-numeric: tabular-nums; touch-action: manipulation; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+ul { list-style: none; }
+
+/* ---------- Teléfono ---------- */
+.phone { position: relative; width: 100%; height: 100dvh; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 600px) {
+  body { background: #0b0b0b; height: 100vh; }
+  .phone { width: 402px; height: 874px; border-radius: 56px; transform-origin: center; outline: 10px solid #1a1a1a; --safe-top: 59px; --safe-bottom: 34px; }
+  .phone::before { content: ""; position: absolute; z-index: 80; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: #000; pointer-events: none; }
+}
+
+/* ---------- Inicio ---------- */
+.home { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.home-bar { padding: calc(var(--safe-top) + 14px) 24px 0; text-align: center; font-size: 17px; min-height: calc(var(--safe-top) + 44px); }
+.home-bar span { color: var(--ink-2); }
+.stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px calc(238px + var(--safe-bottom)); }
+.head { font-size: min(56px, 14vw); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-align: center; }
+.head span { display: block; }
+.tray, .tray2 { position: relative; background: var(--sheet); border-radius: 44px 44px 0 0; height: calc(262px + var(--safe-bottom)); flex: none; }
+.tray { position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; }
+.pointer { position: absolute; top: 22px; left: 50%; margin-left: -10px; }
+.rail { position: absolute; top: 40px; left: 0; right: 0; height: 140px; display: flex; align-items: center; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.rail::-webkit-scrollbar { display: none; }
+.rail::before, .rail::after { content: ""; flex: 0 0 calc(50% - 50px); }
+.rail.mouse-drag { scroll-snap-type: none; cursor: grabbing; }
+.slot { flex: none; width: 100px; height: 140px; display: grid; place-items: center; scroll-snap-align: center; scroll-snap-stop: always; }
+.slot .c { --k: 0; width: 126px; height: 126px; border-radius: 50%; display: grid; place-items: center; will-change: transform;
+  background: color-mix(in srgb, var(--accent) calc(var(--k) * 100%), var(--chip));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, calc(0.06 + var(--k) * 0.16));
+  color: color-mix(in srgb, #fff calc(var(--k) * 100%), #a0a0a5); }
+.slot svg { width: 54px; height: 54px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* Dial de valor exacto: círculo central + ajuste fino + regla */
+.dial { position: absolute; top: 40px; left: 0; right: 0; height: 126px; }
+.go { position: absolute; left: 50%; top: 0; width: 126px; height: 126px; margin-left: -63px; border-radius: 50%; background: var(--accent); color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22); display: grid; place-items: center; font-weight: 300; letter-spacing: -0.02em; transition: transform 140ms var(--ease-out); }
+.go:active { transform: scale(0.97); }
+.nudge { position: absolute; border-radius: 50%; background: var(--chip); color: #c7c7cc; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); display: grid; place-items: center; font-size: 16px; transition: transform 140ms var(--ease-out); }
+.nudge:active { transform: scale(0.94); }
+.nudge.s { width: 56px; height: 56px; top: 35px; }
+.nudge.l { width: 48px; height: 48px; top: 39px; font-size: 15px; color: var(--ink-2); }
+.nudge[data-n="-0.1"] { left: max(8px, calc(50% - 129px)); }
+.nudge[data-n="-1"] { left: max(8px, calc(50% - 187px)); }
+.nudge[data-n="0.1"] { left: calc(50% + 73px); }
+.nudge[data-n="1"] { left: calc(50% + 139px); }
+.ruler { position: absolute; top: 182px; left: 0; right: 0; height: 44px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; cursor: grab; }
+.ruler::-webkit-scrollbar { display: none; }
+.ruler.mouse-drag { cursor: grabbing; }
+.ruler-in { position: relative; height: 44px; }
+.ticks { --px: 80px; position: absolute; bottom: 14px; height: 16px; background-image: linear-gradient(90deg, #55555a 1px, transparent 1px), linear-gradient(90deg, #a0a0a5 1.5px, transparent 1.5px); background-size: calc(var(--px) / 10) 8px, var(--px) 16px; background-repeat: repeat-x; background-position: left bottom; } /* taste-skill-ignore: marcas de 1 px de la regla, no un degradé decorativo */
+.ruler-in span { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 12px; color: var(--ink-2); }
+.mark { position: absolute; top: 182px; left: 50%; width: 2px; height: 30px; margin-left: -1px; border-radius: 1px; background: var(--accent); pointer-events: none; }
+.tray2 .hint { top: 234px; }
+.stepin { width: 96px; text-align: center; background: none; border: 0; color: var(--ink); font: inherit; font-size: 26px; font-weight: 300; -webkit-user-select: text; user-select: text; }
+.inl { width: 4.2ch; text-align: center; background: #1c1c1e; border: 0; border-radius: 8px; color: var(--ink); font: inherit; font-size: 17px; padding: 2px 4px; margin: 0 2px; -webkit-user-select: text; user-select: text; }
+.from-in { width: 160px; background: none; border: 0; text-align: center; color: var(--ink); caret-color: var(--accent); font: inherit; font-size: 28px; font-weight: 300; -webkit-user-select: text; user-select: text; }
+.hint { position: absolute; top: 196px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--ink-2); }
+
+/* ---------- Funciones ---------- */
+.fn { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg); opacity: 0; visibility: hidden; transform: translateY(20px);
+  transition: opacity 200ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s 240ms; }
+.fn.open { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease-out), transform 360ms var(--ease-drawer), visibility 0s; }
+#fn-det { z-index: 50; }
+.fn-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) 16px 0; flex: none; }
+.fn-bar h2 { font-size: 17px; font-weight: 600; text-align: center; }
+.icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-2); font-size: 15px; font-weight: 500; transition: transform 140ms var(--ease-out); }
+.icon:active { transform: scale(0.94); }
+.icon svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fn-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 24px; text-align: center; }
+.scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 8px 24px calc(var(--safe-bottom) + 28px); }
+.scroll::-webkit-scrollbar { display: none; }
+.hero2 { padding: 28px 0 8px; text-align: center; }
+.big { font-size: min(72px, 18vw); font-weight: 300; letter-spacing: -0.04em; line-height: 1; }
+.big .cur { font-size: 0.46em; margin-right: 0.1em; color: var(--ink-2); letter-spacing: 0; vertical-align: top; position: relative; top: 0.12em; }
+.big small { font-size: 0.34em; margin-left: 0.12em; color: var(--ink-2); letter-spacing: 0; font-weight: 400; }
+.sub { margin-top: 14px; font-size: 17px; }
+.find { margin: 8px auto 0; max-width: 300px; font-size: 15px; line-height: 1.35; color: var(--ink-2); text-wrap: balance; }
+h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2); }
+.kv { display: flex; justify-content: space-between; align-items: baseline; min-height: 48px; padding: 12px 0; font-size: 17px; gap: 16px; }
+.kv span { color: var(--ink-2); font-size: 15px; }
+.kv em { display: block; margin-top: 3px; font-style: normal; font-size: 13px; color: var(--ink-2); }
+.kv b { font-weight: 500; text-align: right; }
+.note { padding: 14px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+
+.bar3 { display: flex; gap: 2px; height: 6px; margin: 14px 0 8px; border-radius: 3px; overflow: hidden; }
+.bar3 i { display: block; min-width: 2px; }
+.leg { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
+.bars { display: flex; align-items: flex-end; justify-content: space-between; height: 84px; margin-top: 14px; }
+.bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 8px; font-size: 12px; color: var(--ink-2); }
+.bars i { display: block; width: 22px; border-radius: 4px 4px 0 0; background: #3a3a3c; min-height: 2px; }
+.bars div.on i { background: var(--ink); }
+
+.month { margin: 22px 0 6px; font-size: 13px; color: var(--ink-2); }
+.month:first-child { margin-top: 6px; }
+.row { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; min-height: 68px; }
+.row .d { font-size: 15px; color: var(--ink-2); }
+.row b { display: block; font-size: 17px; font-weight: 500; }
+.row i { display: block; margin-top: 3px; font-size: 13px; font-style: normal; color: var(--ink-2); }
+.row .c { font-size: 17px; text-align: right; }
+
+.seg { display: flex; padding: 3px; border-radius: 999px; background: #151517; justify-self: center; }
+.seg button { position: relative; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 15px; color: var(--ink-2); transition: background-color 160ms ease, color 160ms ease; white-space: nowrap; }
+.seg button::before { content: ""; position: absolute; inset: -4px 0; }
+.seg button[aria-pressed="true"] { background: #2c2c2e; color: var(--ink); }
+.seg.wide { display: flex; margin-top: 18px; }
+.seg.wide button { flex: 1; padding: 0 4px; }
+
+.stp2 { padding: 16px 0 8px; }
+.stp2 b { display: block; font-size: 20px; font-weight: 500; }
+.stp2 em { display: block; margin-top: 4px; font-style: normal; font-size: 13px; line-height: 1.35; color: var(--ink-2); }
+.step2 { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+.step2 button { width: 44px; height: 44px; border-radius: 50%; background: var(--chip); color: #c7c7cc; font-size: 14px; transition: transform 140ms var(--ease-out); }
+.step2 button:active { transform: scale(0.94); }
+.step2 .stepin { width: 104px; font-size: 30px; }
+.stp { display: flex; align-items: center; justify-content: space-between; min-height: 84px; }
+.stp b { display: block; font-size: 20px; font-weight: 500; }
+.stp em { display: block; margin-top: 4px; font-style: normal; font-size: 13px; color: var(--ink-2); }
+.step { display: flex; align-items: center; }
+.step button { width: 44px; height: 44px; border-radius: 50%; background: var(--chip); font-size: 24px; font-weight: 300; line-height: 44px; transition: transform 140ms var(--ease-out); }
+.step button:active { transform: scale(0.94); }
+.step output { min-width: 88px; text-align: center; font-size: 26px; font-weight: 300; }
+
+.field { display: block; padding: 10px 0; }
+.field label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--ink-2); }
+.field input, .field select { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: #1c1c1e; color: var(--ink); font: inherit; font-size: 17px; -webkit-user-select: text; user-select: text; color-scheme: dark; appearance: none; }
+.field .hintt { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pill { display: block; width: 100%; height: 48px; margin-top: 22px; border-radius: 999px; background: #fff; color: #000; font-size: 17px; font-weight: 600; transition: transform 140ms var(--ease-out); }
+.pill:active { transform: scale(0.97); }
+.link { margin-top: 18px; height: 44px; padding: 0 18px; font-size: 15px; color: var(--ink-2); border-radius: 999px; }
+.link:active { transform: scale(0.97); }
+
+.value { display: flex; align-items: baseline; gap: 10px; }
+.value .num { font-size: 96px; font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
+.value .unit { font-size: 26px; color: var(--ink-2); }
+.value-input { width: 260px; background: none; border: 0; text-align: center; color: var(--ink); caret-color: var(--accent); font: inherit; font-size: 96px; font-weight: 200; letter-spacing: -0.04em; line-height: 1; -webkit-user-select: text; user-select: text; }
+.cost { margin-top: 14px; font-size: 28px; font-weight: 300; }
+.meta { margin-top: 6px; font-size: 15px; color: var(--ink-2); max-width: 320px; line-height: 1.35; }
+.center .bar3 { width: 240px; }
+.center .leg { width: 240px; }
+.toast { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="phone" id="phone">
+  <div class="probe" id="probe" style="position:absolute;visibility:hidden"></div>
+
+  <!-- ===== Inicio ===== -->
+  <section class="home" id="home" aria-label="Inicio">
+    <p class="home-bar" id="topBar"></p>
+    <div class="stage"><h1 class="head" id="head" role="status" aria-live="polite"></h1></div>
+    <div class="tray">
+      <svg class="pointer" width="20" height="10" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 0h20L10 10z" fill="#fff"/></svg>
+      <div class="rail" id="rail"></div>
+      <p class="hint">Tocá la ficha del centro</p>
+    </div>
+  </section>
+
+  <!-- ===== Registrar carga ===== -->
+  <section class="fn" id="fn-cargar" aria-label="Registrar carga" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M5 5l12 12M17 5L5 17"/></svg></button>
+      <div class="seg" role="group" aria-label="Dónde cargaste" id="kindSeg">
+        <button data-kind="home" aria-pressed="true">Casa</button>
+        <button data-kind="public" aria-pressed="false">Pública</button>
+      </div>
+      <button class="icon" id="modeBtn" aria-label="Cargar por porcentaje de batería">%</button>
+    </header>
+    <div class="fn-body">
+      <div class="center">
+        <button class="value" id="valueBtn" aria-label="Escribir el valor exacto"><span class="num" id="valNum">25</span><span class="unit" id="valUnit">kWh</span></button>
+        <input class="value-input" id="valInput" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="Valor" hidden>
+        <button class="link" id="fromBtn" hidden style="margin-top:6px">Desde 20 %</button>
+        <input class="from-in" id="fromInput" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="Batería al empezar, en porcentaje" hidden>
+        <p class="cost" id="costLine"></p>
+        <p class="meta" id="ctxLine" role="status" aria-live="polite"></p>
+        <div id="kBar" style="display:contents"></div>
+        <button class="link" id="detBtn">Detalles</button>
+      </div>
+      <div class="tray2">
+        <svg class="pointer" width="20" height="10" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 0h20L10 10z" fill="#fff"/></svg>
+        <div class="dial">
+          <button class="nudge l" data-n="-1" aria-label="Restar 1">−1</button>
+          <button class="nudge s" data-n="-0.1" aria-label="Restar 0,1">−0,1</button>
+          <button class="go" id="goBtn" aria-label="Guardar la carga"><span id="goVal">25,0</span></button>
+          <button class="nudge s" data-n="0.1" aria-label="Sumar 0,1">+0,1</button>
+          <button class="nudge l" data-n="1" aria-label="Sumar 1">+1</button>
+        </div>
+        <div class="ruler" id="ruler" tabindex="0" role="slider" aria-label="Valor de la carga" aria-valuemin="0" aria-valuemax="120" aria-valuenow="25"><div class="ruler-in" id="rulerIn"><div class="ticks" id="ticks"></div></div></div>
+        <i class="mark" aria-hidden="true"></i>
+        <p class="hint">Tocá el centro para guardar</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="fn" id="fn-det" aria-label="Detalles de la carga" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Detalles</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll"><div id="detForm"></div><button class="pill" data-close>Listo</button></div></div>
+  </section>
+
+  <!-- ===== Cuándo empezar ===== -->
+  <section class="fn" id="fn-prog" aria-label="Cuándo empezar a cargar" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Cuándo empezar</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll">
+      <div class="hero2"><p class="big" id="pStart">—</p><p class="sub" id="pSub"></p><p class="find" id="pFind"></p></div>
+      <div class="stp2"><div><b>Desde</b><em>batería al enchufar · tocá el número para escribirlo, ej. 36,3</em></div>
+        <div class="step2"><button data-s="from" data-d="-1" aria-label="Restar 1">−1</button><button data-s="from" data-d="-0.1" aria-label="Restar 0,1">−0,1</button><input class="stepin" id="o-from" inputmode="decimal" aria-label="Batería al enchufar, en porcentaje" autocomplete="off"><button data-s="from" data-d="0.1" aria-label="Sumar 0,1">+0,1</button><button data-s="from" data-d="1" aria-label="Sumar 1">+1</button></div></div>
+      <div class="stp2"><div><b>Hasta</b><em>batería al terminar</em></div>
+        <div class="step2"><button data-s="to" data-d="-1" aria-label="Restar 1">−1</button><button data-s="to" data-d="-0.1" aria-label="Restar 0,1">−0,1</button><input class="stepin" id="o-to" inputmode="decimal" aria-label="Batería al terminar, en porcentaje" autocomplete="off"><button data-s="to" data-d="0.1" aria-label="Sumar 0,1">+0,1</button><button data-s="to" data-d="1" aria-label="Sumar 1">+1</button></div></div>
+      <div class="stp"><div><b>Terminar a las</b><em>hora en que salís</em></div><div class="step"><button data-s="at" data-d="-30" aria-label="Más temprano">−</button><output id="o-at"></output><button data-s="at" data-d="30" aria-label="Más tarde">+</button></div></div>
+      <div class="field"><label for="p-odo">Odómetro de esta carga (km, opcional)</label><input id="p-odo" inputmode="decimal" autocomplete="off" placeholder="Para afinar tu autonomía"></div>
+      <div id="pAlt"></div>
+      <div id="pAuto"></div>
+      <button class="pill" id="pRegister">Registrar con estos datos</button>
+    </div></div>
+  </section>
+
+  <!-- ===== Historial ===== -->
+  <section class="fn" id="fn-historial" aria-label="Historial" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Historial</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="list"></div></div>
+  </section>
+
+  <!-- ===== Gasto ===== -->
+  <section class="fn" id="fn-gasto" aria-label="Gasto" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2 id="gTitle">Últimos 30 días</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="gasto"></div></div>
+  </section>
+
+  <!-- ===== Autonomía ===== -->
+  <section class="fn" id="fn-auto" aria-label="Autonomía" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Autonomía</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="auto"></div></div>
+  </section>
+
+  <!-- ===== Precios ===== -->
+  <section class="fn" id="fn-precios" aria-label="Precios y tarifas" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Precios y tarifas</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="precios"></div></div>
+  </section>
+</main>
+
+<script src="logic.js"></script>
+<script>
+(() => {
+  'use strict';
+  const L = CargaLogic;
+  const $ = (s) => document.querySelector(s);
+  const phone = $('#phone');
+
+  /* ---------- Formato (es-UY) ---------- */
+  const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const int = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const dec = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');
+  /** Número con coma decimal: entre `min` y `max` decimales (sin ceros de más). */
+  function fmtNum(n, min, max) {
+    const k = 10 ** max;
+    const [i, f0 = ''] = (Math.round(n * k) / k).toFixed(max).split('.');
+    let f = f0.replace(/0+$/, '');
+    while (f.length < min) f += '0';
+    return f ? `${i},${f}` : i;
+  }
+  const kwhTxt = (n) => fmtNum(n, 1, 2); // el cargador muestra hasta 2 decimales
+  const pctTxt = (n) => fmtNum(n, 0, 1); // el % de batería, hasta 1 decimal
+  const money = (n) => '$ ' + int(n);
+  const money2 = (n) => '$ ' + dec(n, 2);
+  const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const shortDate = (d) => `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+  const cap = (s) => s[0].toUpperCase() + s.slice(1);
+  const toInput = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${hhmm(d)}`;
+  const num = (v) => parseFloat(String(v).replace(',', '.'));
+
+  /* ---------- Estado y persistencia ---------- */
+  const KEY = 'carga.v3';
+  const DEFAULTS = () => ({
+    vehicle: { name: 'GAC Aion UT Max', batteryKwh: 60, consumptionWhKm: 135 },
+    rates: { ...L.UTE_2026_RATES }, puntaStart: L.DEFAULT_PUNTA_START, amps: 24, volts: 226, charges: [],
+  });
+
+  /** Datos de ejemplo coherentes (km, % de batería, horas, costos) generados con el mismo motor. */
+  function makeSeed(now) {
+    const B = 60, kw = L.chargerKw(24, 226), R = L.UTE_2026_RATES;
+    const ute = L.groupNetworkRows(L.FALLBACK_NETWORK_ROWS).find((g) => g.key === 'UTE');
+    const plan = [[58, 'home', 90, 22.5, 160], [52, 'home', 100, 23, 190], [46, 'public', 80, 13, 210], [41, 'home', 90, 22, 150],
+      [35, 'home', 95, 23.5, 260], [30, 'home', 90, 21.5, 190], [24, 'home', 100, 23, 170], [19, 'public', 80, 12.5, 230],
+      [13, 'home', 90, 22, 200], [8, 'home', 95, 23, 160], [4, 'home', 90, 22.5, 220], [2, 'home', 90, 23, 140]];
+    let pct = 88, odo = 14230, id = 1;
+    const out = [];
+    for (const [ago, kind, target, hour, km] of plan) {
+      odo += km;
+      const startPct = Math.max(10, Math.round((pct - (km * 0.143 / B) * 100) * 10) / 10);
+      const kwh = Math.round(L.kwhFromPct(startPct, target, B) * 100) / 100;
+      const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ago);
+      const base = { id: id++, odometerKm: odo, kwh, startPct, endPct: target, pricePerKwh: null, fixedFee: null, network: null, endAt: null };
+      if (kind === 'home') {
+        const start = new Date(day.getTime() + hour * 3600e3);
+        const end = new Date(start.getTime() + L.minutesToDeliver(startPct, kwh, kw, B) * 60000);
+        const r = L.computeHomeChargeCost(start, end, kwh, R, 19, { nominalKw: kw, startPct, batteryKwh: B });
+        out.push({ ...base, location: 'home', startAt: start.toISOString(), endAt: end.toISOString(), cost: r.total, valleKwh: r.valleKwh, llanoKwh: r.llanoKwh, puntaKwh: r.puntaKwh });
+      } else {
+        const at = new Date(day.getTime() + hour * 3600e3), v = L.pickVariant(ute, at);
+        out.push({ ...base, location: 'public', startAt: at.toISOString(), pricePerKwh: v.price, fixedFee: v.fee, network: v.empresa, cost: L.computePublicChargeCost(v.price, kwh, v.fee), valleKwh: 0, llanoKwh: 0, puntaKwh: 0 });
+      }
+      pct = target;
+    }
+    return out;
+  }
+
+  let S;
+  try { S = JSON.parse(localStorage.getItem(KEY)); } catch (_) {}
+  if (!S || !Array.isArray(S.charges)) { S = DEFAULTS(); S.charges = makeSeed(new Date()); }
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
+
+  const nominalKw = () => (S.amps > 0 && S.volts > 0 ? L.chargerKw(S.amps, S.volts) : 0);
+  const homeCharges = () => S.charges.filter((c) => c.location === 'home');
+  const calibration = () => L.computeCalibration(homeCharges(), nominalKw(), S.vehicle.batteryKwh);
+  const consumption = () => { const real = L.realConsumption(S.charges, S.vehicle.batteryKwh); return { real, rc: L.rangeConsumption(S.vehicle, real) }; };
+
+  /* ---------- Precios de redes públicas (en vivo → caché → resguardo) ---------- */
+  const NET_URL = 'https://evuruguay.com/cargadores_all.csv', NET_KEY = 'carga.v3.redes';
+  let net = { rows: L.FALLBACK_NETWORK_ROWS, source: 'base', at: null };
+  async function loadNetworks() {
+    try { const c = JSON.parse(localStorage.getItem(NET_KEY)); if (c && c.rows && c.rows.length) net = { rows: c.rows, source: 'guardado', at: c.at }; } catch (_) {}
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 4000);
+      const res = await fetch(NET_URL, { signal: ctl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(res.status);
+      const rows = L.parseCsv(await res.text());
+      if (!rows.length) throw new Error('vacío');
+      net = { rows, source: 'en vivo', at: Date.now() };
+      try { localStorage.setItem(NET_KEY, JSON.stringify({ rows, at: net.at })); } catch (_) {}
+    } catch (_) { /* sin red: se queda con caché o resguardo */ }
+    renderAll();
+  }
+  const groups = () => L.groupNetworkRows(net.rows);
+
+  /* ---------- Fichas: carril con zoom central ---------- */
+  const SLOT = 100;
+  function makeRail(el, { count, html, label, onChange, onActivate }) {
+    el.innerHTML = Array.from({ length: count }, (_, i) => `<button class="slot" data-i="${i}" aria-label="${label(i)}"><span class="c">${html(i)}</span></button>`).join('');
+    const slots = [...el.children], discs = slots.map((s) => s.firstElementChild);
+    let idx = -1, prog = false, timer = 0, raf = 0, md = null, dragged = false;
+    const at = () => Math.max(0, Math.min(count - 1, Math.round(el.scrollLeft / SLOT)));
+    function paint() {
+      const c = el.scrollLeft;
+      for (let i = 0; i < count; i++) {
+        const k = Math.max(0, 1 - Math.abs(i * SLOT - c) / SLOT);
+        discs[i].style.transform = `scale(${(0.52 + 0.48 * (k * k * (3 - 2 * k))).toFixed(3)})`;
+        discs[i].style.setProperty('--k', k.toFixed(3));
+        slots[i].style.zIndex = Math.round(k * 10);
+      }
+      const n = at();
+      if (n !== idx) { idx = n; onChange(n, !prog); }
+    }
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); };
+    const onClick = (e) => {
+      if (dragged) return;
+      const s = e.target.closest('.slot'); if (!s) return;
+      const i = +s.dataset.i;
+      if (i === at()) onActivate(i); else go(i, true, true);
+    };
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight' && at() < count - 1) go(at() + 1, true, true);
+      if (e.key === 'ArrowLeft' && at() > 0) go(at() - 1, true, true);
+    };
+    // arrastre con mouse (solo vista previa de escritorio)
+    const onDown = (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: el.scrollLeft, moved: false }; };
+    const onMove = (e) => {
+      if (!md) return;
+      const dx = e.clientX - md.x;
+      if (!md.moved && Math.abs(dx) > 5) { md.moved = true; el.classList.add('mouse-drag'); }
+      if (md.moved) el.scrollLeft = md.l - dx;
+    };
+    const onUp = () => {
+      if (!md) return;
+      const m = md; md = null;
+      if (!m.moved) return;
+      el.classList.remove('mouse-drag');
+      dragged = true; setTimeout(() => (dragged = false), 0);
+      el.scrollTo({ left: Math.round(el.scrollLeft / SLOT) * SLOT, behavior: 'smooth' });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('click', onClick);
+    el.addEventListener('keydown', onKey);
+    el.addEventListener('pointerdown', onDown);
+    addEventListener('pointermove', onMove);
+    addEventListener('pointerup', onUp);
+    /** Quita todos los escuchadores: hay que llamarlo antes de reconstruir la bandeja sobre el mismo elemento. */
+    function destroy() {
+      cancelAnimationFrame(raf); clearTimeout(timer);
+      el.removeEventListener('scroll', onScroll); el.removeEventListener('click', onClick);
+      el.removeEventListener('keydown', onKey); el.removeEventListener('pointerdown', onDown);
+      removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp);
+    }
+    /** `byUser`: el cambio de índice cuenta como acción del usuario (toque en una ficha lateral). */
+    function go(i, smooth, byUser) {
+      prog = !byUser; clearTimeout(timer);
+      timer = setTimeout(() => (prog = false), smooth ? 700 : 80);
+      el.scrollTo({ left: i * SLOT, behavior: smooth ? 'smooth' : 'instant' });
+    }
+    return { go, paint, destroy, get index() { return at(); }, relabel(fn) { discs.forEach((c, i) => (c.firstElementChild.textContent = fn(i))); } };
+  }
+
+  const ICONS = {
+    cargar: '<path d="M13.5 3L5.5 14h6l-1 7 8-11h-6l1-7z"/>',
+    prog: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
+    historial: '<path d="M5 7h14M5 12h14M5 17h9"/>',
+    gasto: '<path d="M5 19V10M12 19V5M19 19v-7"/>',
+    auto: '<path d="M4.5 17a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4.5"/>',
+    precios: '<path d="M4 12.5V5h7.5L20 13.5 13.5 20 4 12.5z"/><circle cx="8.2" cy="9.2" r="1.2"/>',
+  };
+  const FUNCS = [
+    { id: 'cargar', name: 'Registrar carga', head: ['Registrar', 'carga'] },
+    { id: 'prog', name: 'Cuándo empezar', head: ['Cuándo', 'empezar'] },
+    { id: 'historial', name: 'Historial', head: ['Ver', 'historial'] },
+    { id: 'gasto', name: 'Gasto', head: ['Cuánto', 'gasté'] },
+    { id: 'auto', name: 'Autonomía', head: ['Mi', 'autonomía'] },
+    { id: 'precios', name: 'Precios y tarifas', head: ['Precios', 'y tarifas'] },
+  ];
+  const homeRail = makeRail($('#rail'), {
+    count: FUNCS.length,
+    html: (i) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[FUNCS[i].id]}</svg>`,
+    label: (i) => FUNCS[i].name,
+    onChange: (i) => { $('#head').innerHTML = FUNCS[i].head.map((w) => `<span>${w}</span>`).join(''); },
+    onActivate: (i) => openFn(FUNCS[i].id),
+  });
+
+  /* ---------- Abrir y cerrar pantallas (pila) ---------- */
+  const stack = [];
+  function openFn(id, preset) {
+    if (id === 'cargar') initCargar(preset);
+    if (id === 'prog') initProg();
+    renderAll();
+    const el = $('#fn-' + id);
+    el.inert = false; el.classList.add('open');
+    (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = true;
+    stack.push(id);
+    if (id === 'prog') renderProg();
+    if (id === 'cargar') { buildRuler(); rulerTo(getVal()); }
+  }
+  function closeFn() {
+    const id = stack.pop(); if (!id) return;
+    const el = $('#fn-' + id);
+    el.classList.remove('open'); el.inert = true;
+    (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = false;
+  }
+  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closeFn));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFn(); });
+
+  /* ---------- Barra de franjas (Valle / Llano / Punta) ---------- */
+  function bands(v, l, p) {
+    const t = v + l + p;
+    if (!(t > 0)) return '';
+    const pc = (x) => Math.round((x / t) * 100);
+    return `<div class="bar3" role="img" aria-label="Valle ${pc(v)}%, Llano ${pc(l)}%, Punta ${pc(p)}%"><i style="flex:${v};background:var(--accent)"></i><i style="flex:${l};background:#8e8e93"></i><i style="flex:${p};background:#fff"></i></div>`
+      + `<div class="leg"><span>Valle ${pc(v)}%</span><span>Llano ${pc(l)}%</span><span>Punta ${pc(p)}%</span></div>`;
+  }
+
+  /* ================= Registrar carga ================= */
+  const K = { kind: 'home', mode: 'kwh', kwh: 25, from: 20, to: 80, start: null, end: null, windowTouched: false, odo: '', netKey: '', varIdx: 0, price: '', fee: '', priceTouched: false, date: null };
+
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const kwhNow = () => (K.mode === 'kwh' ? K.kwh : r2(L.kwhFromPct(K.from, K.to, S.vehicle.batteryKwh) || 0));
+  const getVal = () => (K.mode === 'kwh' ? K.kwh : K.to);
+  const valTxt = () => (K.mode === 'kwh' ? kwhTxt(K.kwh) : pctTxt(K.to));
+  const maxVal = () => (K.mode === 'kwh' ? 200 : 100);
+
+  /** Cambia el valor activo (kWh o % final), con la precisión de cada uno: 2 decimales en kWh, 1 en %. */
+  function setVal(v, fromRuler) {
+    v = Math.min(maxVal(), Math.max(0.1, K.mode === 'kwh' ? r2(v) : r1(v)));
+    if (K.mode === 'kwh') K.kwh = v; else K.to = v;
+    recalc();
+    if (!fromRuler) rulerTo(v);
+  }
+
+  /* ----- Regla deslizable: 80 px por unidad, marcas cada 0,1 ----- */
+  const PX = 80;
+  const ruler = $('#ruler');
+  let rulerProg = false, rulerProgTimer = 0, snapTimer = 0;
+  const rulerMax = () => (K.mode === 'kwh' ? 120 : 100);
+
+  function buildRuler() {
+    const w = ruler.clientWidth || 402, half = w / 2, max = rulerMax(), every = K.mode === 'kwh' ? 5 : 10;
+    $('#rulerIn').style.width = `${max * PX + w + 2}px`;
+    const t = $('#ticks');
+    t.style.left = `${half}px`; t.style.width = `${max * PX + 2}px`;
+    let labels = '';
+    for (let n = 0; n <= max; n += every) labels += `<span style="left:${half + n * PX}px">${n}</span>`;
+    $('#rulerIn').querySelectorAll('span').forEach((s) => s.remove());
+    $('#rulerIn').insertAdjacentHTML('beforeend', labels);
+    ruler.setAttribute('aria-valuemax', max);
+  }
+  function rulerTo(v) {
+    rulerProg = true; clearTimeout(rulerProgTimer);
+    rulerProgTimer = setTimeout(() => (rulerProg = false), 120);
+    ruler.scrollTo({ left: Math.min(v, rulerMax()) * PX, behavior: 'instant' });
+  }
+  ruler.addEventListener('scroll', () => {
+    if (rulerProg) return;
+    setVal(r1(ruler.scrollLeft / PX), true);
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => { if (!rulerProg) { rulerProg = true; ruler.scrollTo({ left: getVal() * PX, behavior: 'smooth' }); setTimeout(() => (rulerProg = false), 350); } }, 160);
+  }, { passive: true });
+  ruler.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 0.1, ArrowLeft: -0.1, PageUp: 1, PageDown: -1 }[e.key];
+    if (d != null) { e.preventDefault(); setVal(getVal() + d); }
+  });
+  (function mouseDragRuler() {
+    let md = null;
+    ruler.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: ruler.scrollLeft, moved: false }; });
+    addEventListener('pointermove', (e) => {
+      if (!md) return;
+      const dx = e.clientX - md.x;
+      if (!md.moved && Math.abs(dx) > 3) { md.moved = true; ruler.classList.add('mouse-drag'); }
+      if (md.moved) ruler.scrollLeft = md.l - dx;
+    });
+    addEventListener('pointerup', () => { md = null; ruler.classList.remove('mouse-drag'); });
+  })();
+
+  /** Botones de ajuste fino: un toque suma un paso; mantenido, repite y acelera de a poco (x1, x2 a 1,5 s, x5 a 3 s). */
+  function holdRepeat(btn, step) {
+    let timer = 0, rep = 0;
+    const stop = () => { clearTimeout(timer); clearInterval(rep); };
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); stop(); step(1);
+      const t0 = performance.now();
+      timer = setTimeout(() => { rep = setInterval(() => { const held = performance.now() - t0; step(held > 3000 ? 5 : held > 1500 ? 2 : 1); }, 110); }, 420);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
+    btn.addEventListener('click', (e) => { if (e.detail === 0) step(1); }); // teclado
+  }
+  document.querySelectorAll('.nudge').forEach((b) => holdRepeat(b, (mult) => setVal(getVal() + Number(b.dataset.n) * mult)));
+  $('#goBtn').addEventListener('click', () => saveCharge());
+
+  function currentVariant() {
+    const g = groups().find((x) => x.key === K.netKey);
+    return g ? g.variants[Math.min(K.varIdx, g.variants.length - 1)] : null;
+  }
+  function pickNet(now) {
+    const rank = L.rankNetworks(groups(), now, Math.max(kwhNow(), 1));
+    const g = groups().find((x) => x.key === K.netKey) || groups().find((x) => x.key === 'UTE') || groups()[0];
+    if (!g) return;
+    K.netKey = g.key;
+    const v = L.pickVariant(g, now);
+    K.varIdx = Math.max(0, g.variants.indexOf(v));
+    if (!K.priceTouched && v) { K.price = String(v.price); K.fee = String(v.fee); }
+    return rank;
+  }
+
+  function homeWindow() {
+    const now = new Date(), kwh = kwhNow(), kw = nominalKw();
+    if (!K.windowTouched) {
+      let mins = 120;
+      if (kwh > 0 && kw > 0) mins = Math.max(10, K.mode === 'pct' ? L.minutesToDeliver(K.from, kwh, kw, S.vehicle.batteryKwh, calibration().factor) || 120 : Math.ceil((kwh / kw) * 60));
+      K.end = now; K.start = new Date(now.getTime() - mins * 60000);
+    }
+    return { start: K.start, end: K.end };
+  }
+
+  /** Calcula el costo con el motor y actualiza la pantalla (nunca guarda un costo tipeado a mano). */
+  function recalc() {
+    const vt = valTxt();
+    $('#valNum').textContent = vt;
+    $('#valUnit').textContent = K.mode === 'kwh' ? 'kWh' : '%';
+    const gv = $('#goVal'); gv.textContent = vt; gv.style.fontSize = `${vt.length <= 4 ? 46 : vt.length === 5 ? 38 : 32}px`;
+    ruler.setAttribute('aria-valuenow', getVal()); ruler.setAttribute('aria-valuetext', `${vt} ${K.mode === 'kwh' ? 'kilovatios hora' : 'por ciento'}`);
+    $('#fromBtn').hidden = K.mode !== 'pct' || !$('#fromInput').hidden; $('#fromBtn').textContent = `Desde ${pctTxt(K.from)} %`;
+    const kwh = kwhNow(), cost = $('#costLine'), ctx = $('#ctxLine'), bar = $('#kBar');
+    bar.innerHTML = '';
+    let calc = null;
+    try {
+      if (K.kind === 'home') {
+        const w = homeWindow();
+        const r = L.computeHomeChargeCost(w.start, w.end, kwh, S.rates, S.puntaStart, { nominalKw: nominalKw(), calibration: calibration().factor, startPct: K.mode === 'pct' ? K.from : null, batteryKwh: S.vehicle.batteryKwh });
+        calc = { cost: r.total, ...r };
+        cost.textContent = money(r.total);
+        ctx.textContent = `${kwhTxt(kwh)} kWh · de ${hhmm(w.start)} a ${hhmm(r.finishedAt)}`;
+        bar.innerHTML = bands(r.valleKwh, r.llanoKwh, r.puntaKwh);
+      } else {
+        const price = num(K.price), fee = num(K.fee) || 0;
+        const total = L.computePublicChargeCost(price, kwh, fee);
+        calc = { cost: total };
+        cost.textContent = money(total);
+        const v = currentVariant();
+        ctx.textContent = `${kwhTxt(kwh)} kWh × ${money2(price)}${fee > 0 ? ` + ${money(fee)} fijo` : ''}${v ? ` · ${K.netKey}` : ''}`;
+      }
+    } catch (e) {
+      cost.textContent = '$ 0';
+      ctx.textContent = kwh > 0 ? e.message : K.mode === 'pct' ? 'El % final tiene que ser mayor al inicial.' : 'Elegí cuántos kWh cargaste.';
+    }
+    if (K.mode === 'pct' && kwh > 0) {
+      // si ya hay odómetro, esta carga también entra al consumo real
+      const odo = num(K.odo), pend = K.odo !== '' && isFinite(odo) ? { location: K.kind, startAt: new Date().toISOString(), odometerKm: odo, kwh, startPct: K.from, endPct: K.to } : null;
+      const rc = L.rangeConsumption(S.vehicle, L.realConsumption(pend ? [...S.charges, pend] : S.charges, S.vehicle.batteryKwh));
+      ctx.textContent += ` · terminás con ≈ ${L.rangeAtPct(S.vehicle.batteryKwh, rc.whKm, K.to)} km`;
+    }
+    $('#modeBtn').textContent = K.mode === 'kwh' ? '%' : 'kWh';
+    $('#modeBtn').setAttribute('aria-label', K.mode === 'kwh' ? 'Cargar por porcentaje de batería' : 'Cargar por kWh');
+    K.calc = calc;
+  }
+
+  /** Valores de partida a partir del historial: la última carga y el % de inicio típico. */
+  function initCargar(preset) {
+    const sorted = [...S.charges].sort((a, b) => new Date(b.startAt) - new Date(a.startAt));
+    const starts = S.charges.filter((c) => c.startPct != null).map((c) => c.startPct);
+    K.kind = 'home'; K.mode = 'kwh'; K.windowTouched = false;
+    K.kwh = sorted[0] ? r1(sorted[0].kwh) : 25;
+    K.to = sorted[0] && sorted[0].endPct != null ? sorted[0].endPct : 80;
+    K.from = starts.length ? r1(starts.reduce((a, b) => a + b, 0) / starts.length) : 20;
+    K.odo = ''; K.priceTouched = false; K.date = null; K.netKey = '';
+    if (preset) Object.assign(K, preset); // p. ej. desde "Cuándo empezar": % de inicio/fin y odómetro
+    document.querySelectorAll('#kindSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.kind === 'home'));
+    recalc();
+  }
+
+  document.querySelectorAll('#kindSeg button').forEach((b) => b.addEventListener('click', () => {
+    K.kind = b.dataset.kind;
+    document.querySelectorAll('#kindSeg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    if (K.kind === 'public') pickNet(new Date());
+    recalc();
+  }));
+  $('#modeBtn').addEventListener('click', () => {
+    K.mode = K.mode === 'kwh' ? 'pct' : 'kwh'; K.windowTouched = false;
+    buildRuler(); recalc(); rulerTo(getVal());
+  });
+
+  /* Tocar el número abre el teclado decimal: valor exacto (hasta 2 decimales en kWh, 1 en %). */
+  const valueBtn = $('#valueBtn'), valInput = $('#valInput');
+  valueBtn.addEventListener('click', () => { valueBtn.hidden = true; valInput.hidden = false; valInput.value = valTxt(); valInput.focus(); valInput.select(); });
+  function commitInput() {
+    if (valInput.hidden) return;
+    const v = num(valInput.value);
+    valInput.hidden = true; valueBtn.hidden = false;
+    if (isFinite(v) && v > 0) setVal(v); else recalc();
+  }
+  valInput.addEventListener('blur', commitInput);
+  valInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') valInput.blur(); });
+
+  /* En modo % también se puede escribir el % de inicio exacto. */
+  const fromBtn = $('#fromBtn'), fromInput = $('#fromInput');
+  fromBtn.addEventListener('click', () => { fromBtn.hidden = true; fromInput.hidden = false; fromInput.value = pctTxt(K.from); fromInput.focus(); fromInput.select(); });
+  function commitFrom() {
+    if (fromInput.hidden) return;
+    const v = num(fromInput.value);
+    fromInput.hidden = true;
+    if (isFinite(v) && v >= 0 && v < 100) { K.from = r1(v); K.windowTouched = false; }
+    recalc();
+  }
+  fromInput.addEventListener('blur', commitFrom);
+  fromInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') fromInput.blur(); });
+
+  /* ----- Detalles de la carga ----- */
+  const field = (id, label, input, hint = '') => `<div class="field"><label for="${id}">${label}</label>${input}${hint ? `<p class="hintt">${hint}</p>` : ''}</div>`;
+  function renderDetails() {
+    let h = '';
+    if (K.kind === 'home') {
+      const w = homeWindow();
+      h += `<div class="pair">${field('d-start', 'Empezó', `<input id="d-start" type="datetime-local" value="${toInput(w.start)}">`)}${field('d-end', 'Terminó', `<input id="d-end" type="datetime-local" value="${toInput(w.end)}">`)}</div>`;
+    } else {
+      pickNet(new Date());
+      const g = groups().find((x) => x.key === K.netKey), v = currentVariant();
+      h += field('d-net', 'Red', `<select id="d-net">${groups().map((x) => `<option value="${x.key}" ${x.key === K.netKey ? 'selected' : ''}>${x.key}</option>`).join('')}</select>`);
+      if (g && g.variants.length > 1) h += field('d-var', 'Variante / franja', `<select id="d-var">${g.variants.map((x, i) => `<option value="${i}" ${i === K.varIdx ? 'selected' : ''}>${x.label}</option>`).join('')}</select>`);
+      h += `<div class="pair">${field('d-price', 'Precio $/kWh', `<input id="d-price" inputmode="decimal" value="${K.price}">`, v ? `Sugerido ${money2(v.price)} (${net.source})` : '')}${field('d-fee', 'Cargo fijo $', `<input id="d-fee" inputmode="decimal" value="${K.fee}">`)}</div>`;
+      h += field('d-date', 'Fecha y hora', `<input id="d-date" type="datetime-local" value="${toInput(K.date || new Date())}">`);
+    }
+    if (K.mode === 'pct') h += field('d-from', 'Batería al empezar (%)', `<input id="d-from" inputmode="decimal" value="${K.from}">`);
+    h += field('d-odo', 'Odómetro (km, opcional)', `<input id="d-odo" inputmode="numeric" value="${K.odo}">`, 'Con el odómetro se calcula tu consumo real.');
+    $('#detForm').innerHTML = h;
+  }
+  $('#detBtn').addEventListener('click', () => { renderDetails(); openFn('det'); });
+  $('#detForm').addEventListener('input', (e) => {
+    const id = e.target.id, v = e.target.value;
+    if (id === 'd-start' || id === 'd-end') {
+      const d = new Date(v); if (isNaN(d)) return;
+      if (id === 'd-start') K.start = d; else K.end = d;
+      K.windowTouched = true;
+    } else if (id === 'd-net') {
+      K.netKey = v; K.priceTouched = false;
+      const g = groups().find((x) => x.key === v);
+      K.varIdx = Math.max(0, g.variants.indexOf(L.pickVariant(g, new Date())));
+      pickNetKeep(); renderDetails();
+    }
+    else if (id === 'd-var') { K.varIdx = +v; K.priceTouched = false; const x = currentVariant(); if (x) { K.price = String(x.price); K.fee = String(x.fee); } renderDetails(); }
+    else if (id === 'd-price') { K.price = v; K.priceTouched = true; }
+    else if (id === 'd-fee') { K.fee = v; K.priceTouched = true; }
+    else if (id === 'd-date') { const d = new Date(v); if (!isNaN(d)) K.date = d; }
+    else if (id === 'd-from') { const n = num(v); if (isFinite(n)) { K.from = r1(Math.max(0, Math.min(99.9, n))); K.windowTouched = false; } }
+    else if (id === 'd-odo') K.odo = v;
+    recalc();
+  });
+  function pickNetKeep() { const x = currentVariant(); if (x) { K.price = String(x.price); K.fee = String(x.fee); } }
+
+  let saving = false;
+  function saveCharge() {
+    const kwh = kwhNow();
+    if (!(kwh > 0) || !K.calc || saving) return;
+    saving = true; setTimeout(() => (saving = false), 800); // un doble toque no guarda dos veces
+    const odo = K.odo !== '' && isFinite(num(K.odo)) ? num(K.odo) : null;
+    const base = { id: Date.now(), kwh, odometerKm: odo, startPct: K.mode === 'pct' ? K.from : null, endPct: K.mode === 'pct' ? K.to : null, pricePerKwh: null, fixedFee: null, network: null, endAt: null };
+    try {
+      let c;
+      if (K.kind === 'home') {
+        const w = homeWindow();
+        const r = L.computeHomeChargeCost(w.start, w.end, kwh, S.rates, S.puntaStart, { nominalKw: nominalKw(), calibration: calibration().factor, startPct: base.startPct, batteryKwh: S.vehicle.batteryKwh });
+        c = { ...base, location: 'home', startAt: w.start.toISOString(), endAt: r.finishedAt.toISOString(), cost: r.total, valleKwh: r.valleKwh, llanoKwh: r.llanoKwh, puntaKwh: r.puntaKwh };
+      } else {
+        const price = num(K.price), fee = num(K.fee) || 0, v = currentVariant();
+        c = { ...base, location: 'public', startAt: (K.date || new Date()).toISOString(), pricePerKwh: price, fixedFee: fee, network: v ? v.empresa : K.netKey || 'Otro', cost: L.computePublicChargeCost(price, kwh, fee), valleKwh: 0, llanoKwh: 0, puntaKwh: 0 };
+      }
+      S.charges.push(c); persist();
+      while (stack.length) closeFn();
+      renderAll();
+      flash(`Carga guardada · ${money(c.cost)}`);
+    } catch (e) { $('#ctxLine').textContent = e.message; }
+  }
+
+  let flashTimer = 0;
+  function flash(msg) {
+    const bar = $('#topBar'); clearTimeout(flashTimer);
+    bar.innerHTML = `<span class="toast">${msg}</span>`;
+    flashTimer = setTimeout(renderTop, 2800);
+  }
+
+  /* ================= Cuándo empezar ================= */
+  const GAP = 0.5; // % mínimo entre el inicio y el final
+  const P = { from: 20, to: 80, atMin: 420, odo: '' };
+  /** Valores de partida a partir del historial: % de inicio típico y % final de la última carga. */
+  function initProg() {
+    const last = [...S.charges].sort((a, b) => new Date(b.startAt) - new Date(a.startAt))[0];
+    const starts = S.charges.filter((c) => c.startPct != null).map((c) => c.startPct);
+    P.from = starts.length ? r1(starts.reduce((a, b) => a + b, 0) / starts.length) : 20;
+    P.to = last && last.endPct != null && last.endPct > P.from + GAP ? last.endPct : 80;
+    P.atMin = 420; P.odo = ''; $('#p-odo').value = '';
+  }
+  const setFrom = (v) => { P.from = r1(Math.max(0, Math.min(P.to - GAP, v))); };
+  const setTo = (v) => { P.to = r1(Math.max(P.from + GAP, Math.min(100, v))); };
+  document.querySelectorAll('[data-s]').forEach((b) => holdRepeat(b, (mult) => {
+    const k = b.dataset.s, d = +b.dataset.d;
+    if (k === 'from') setFrom(P.from + d * mult);
+    if (k === 'to') setTo(P.to + d * mult);
+    if (k === 'at') P.atMin = (P.atMin + d + 1440) % 1440;
+    renderProg();
+  }));
+  [['o-from', setFrom], ['o-to', setTo]].forEach(([id, set]) => {
+    const el = $('#' + id);
+    el.addEventListener('focus', () => el.select());
+    el.addEventListener('change', () => { const v = num(el.value); if (isFinite(v)) set(v); renderProg(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); });
+  });
+  function renderProg() {
+    $('#o-from').value = pctTxt(P.from) + '%'; $('#o-to').value = pctTxt(P.to) + '%';
+    $('#o-at').textContent = `${String(Math.floor(P.atMin / 60)).padStart(2, '0')}:${String(P.atMin % 60).padStart(2, '0')}`;
+    const now = new Date();
+    let deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, P.atMin);
+    if (deadline <= now) deadline = new Date(deadline.getTime() + 864e5);
+    const calib = calibration().factor, kw = nominalKw();
+    const altStart = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate() - 1, S.puntaStart, 0);
+    const s = L.suggestStart({ fromPct: P.from, toPct: P.to, deadline, nominalKw: kw, batteryKwh: S.vehicle.batteryKwh, calibration: calib, rates: S.rates, puntaStart: S.puntaStart, altStart: altStart > now ? altStart : now });
+    const out = $('#pAlt');
+    if (!s) { $('#pStart').textContent = '—'; $('#pSub').textContent = 'Configurá tu cargador en Autonomía.'; $('#pFind').textContent = ''; out.innerHTML = ''; return; }
+    const h = Math.floor(s.minutes / 60), m = s.minutes % 60;
+    $('#pStart').textContent = hhmm(s.start);
+    $('#pSub').textContent = `${kwhTxt(s.kwh)} kWh · ${h} h ${m} min · terminás a las ${hhmm(deadline)}`;
+    $('#pFind').textContent = s.valleShare >= 0.995 ? `Todo en Valle: ${money(s.best.total)}.`
+      : `${Math.round(s.valleShare * 100)}% en Valle: ${money(s.best.total)}. Con menos carga o terminando más tarde entra todo en Valle.`;
+    let alt = '';
+    if (s.alt) {
+      const late = s.alt.finishedAt > deadline;
+      alt += `<div class="kv"><span>Si empezás ${s.alt.start === now ? 'ahora' : 'a las ' + hhmm(s.alt.start)}<em>termina ${hhmm(s.alt.finishedAt)}${late ? `, después de las ${hhmm(deadline)}` : ''}</em></span><b>${money(s.alt.total)}</b></div>`;
+    }
+    if (s.alt && s.alt.total > s.best.total + 0.5) alt += `<p class="note">Ahorrás ${money(s.alt.total - s.best.total)} en esta carga.</p>`;
+    const est = L.estimateAtTime(P.from, now, deadline, kw, S.vehicle.batteryKwh, calib);
+    alt += `<h3>Si la dejás cargando ahora</h3><div class="kv"><span>Llegás a las ${hhmm(deadline)} con</span><b>≈ ${pctTxt(est.pct)}%</b></div><div class="kv"><span>Energía</span><b>${kwhTxt(est.kwhDelivered)} kWh</b></div>`;
+    alt += `<p class="note">Potencia estimada ${dec(kw, 1)} kW (${S.amps} A × ${S.volts} V, rendimiento 92%)${calibration().samples ? ` calibrada con ${calibration().samples} cargas` : ''}. Pasado el 80% la carga se hace más lenta.</p>`;
+    out.innerHTML = alt;
+    $('#pAuto').innerHTML = progAuto(now, s);
+  }
+
+  /**
+   * Autonomía de esta carga. Con el odómetro (opcional) se suma el tramo desde la última carga al
+   * consumo real: (fin % anterior − inicio % actual) × batería, sobre los km recorridos.
+   */
+  function progAuto(now, s) {
+    const B = S.vehicle.batteryKwh, odo = num(P.odo), has = P.odo !== '' && isFinite(odo);
+    const prev = S.charges.filter((c) => c.odometerKm != null).sort((a, b) => new Date(b.startAt) - new Date(a.startAt))[0];
+    let list = S.charges, seg = '';
+    if (has) {
+      if (prev && odo <= prev.odometerKm) seg = `<p class="note">Tiene que ser mayor al de tu última carga (${int(prev.odometerKm)} km).</p>`;
+      else {
+        list = [...S.charges, { location: 'home', startAt: now.toISOString(), odometerKm: odo, kwh: s.kwh, startPct: P.from, endPct: P.to }];
+        if (prev) {
+          const km = odo - prev.odometerKm, used = prev.endPct != null ? ((prev.endPct - P.from) / 100) * B : 0;
+          if (km < 10) seg = '<p class="note">Menos de 10 km desde la última carga: todavía no suma al consumo.</p>';
+          else if (used > 0) seg = `<div class="kv"><span>Desde tu última carga<em>${int(km)} km · ${pctTxt(prev.endPct)}% → ${pctTxt(P.from)}%</em></span><b>${dec((used / km) * 100, 1)} kWh/100 km</b></div>`;
+        }
+      }
+    }
+    const rc = L.rangeConsumption(S.vehicle, L.realConsumption(list, B));
+    let h = `<h3>Autonomía</h3><div class="kv"><span>Terminás con<em>${dec(L.whKmToKwh100(rc.whKm), 1)} kWh/100 km${has ? ' · con tu odómetro' : ''}</em></span><b>≈ ${L.rangeAtPct(B, rc.whKm, P.to)} km</b></div>` + seg;
+    if (!has) h += '<p class="note">Con el odómetro de esta carga se afina tu consumo real y la autonomía.</p>';
+    return h;
+  }
+  $('#p-odo').addEventListener('input', (e) => { P.odo = e.target.value.trim(); renderProg(); });
+  $('#pRegister').addEventListener('click', () => openFn('cargar', { mode: 'pct', from: P.from, to: P.to, odo: P.odo }));
+
+  /* ================= Historial / Gasto / Autonomía / Precios ================= */
+  function renderList() {
+    const sorted = [...S.charges].sort((a, b) => new Date(b.startAt) - new Date(a.startAt));
+    const gs = new Map();
+    for (const c of sorted) { const m = MONTHS[new Date(c.startAt).getMonth()]; if (!gs.has(m)) gs.set(m, []); gs.get(m).push(c); }
+    const li = (c) => {
+      const d = new Date(c.startAt);
+      const where = c.location === 'home' ? `Casa · ${c.kwh > 0 ? `Valle ${Math.round((c.valleKwh / c.kwh) * 100)}%` : ''}` : (c.network || 'Pública');
+      const pct = c.startPct != null && c.endPct != null ? ` · ${pctTxt(c.startPct)}→${pctTxt(c.endPct)}%` : '';
+      return `<li class="row"><span class="d">${shortDate(d)}</span><span><b>${kwhTxt(c.kwh)} kWh</b><i>${where}${pct}</i></span><span class="c">${money(c.cost)}</span></li>`;
+    };
+    $('#list').innerHTML = [...gs].map(([m, rows]) => `<p class="month">${cap(m)}</p><ul>${rows.map(li).join('')}</ul>`).join('');
+  }
+
+  let gPeriod = '30d';
+  const DAY = 864e5;
+  /** Período del resumen: 30 días corridos (vs los 30 anteriores) o mes calendario (vs el mismo tramo del mes anterior). */
+  function period(now) {
+    const end = new Date(now.getTime() + 1);
+    if (gPeriod === 'mes') {
+      const from = L.startOfMonth(now), c = L.compareToPrevMonth(S.charges, now);
+      return { from, end, cmp: c, vs: `el mismo tramo de ${MONTHS[L.startOfMonth(now, 1).getMonth()]}` };
+    }
+    const from = new Date(now.getTime() - 30 * DAY), prev = L.statsBetween(S.charges, new Date(now.getTime() - 60 * DAY), from).total;
+    const cur = L.statsBetween(S.charges, from, end).total;
+    return { from, end, cmp: { cur, prev, deltaPct: prev > 0 ? ((cur - prev) / prev) * 100 : null }, vs: 'los 30 días anteriores' };
+  }
+
+  function renderGasto() {
+    const now = new Date(), p = period(now), cmp = p.cmp;
+    const s = L.statsBetween(S.charges, p.from, p.end);
+    const m6 = L.monthlyTotals(S.charges, now, 6), mx = Math.max(...m6.map((x) => x.total), 1);
+    const saved = S.charges.filter((c) => new Date(c.startAt) >= p.from).reduce((a, c) => a + (c.location === 'home' ? L.valleSavings(c, S.rates) : 0), 0);
+    const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+    let h = `<div class="seg wide" role="group" aria-label="Período"><button data-gp="30d" aria-pressed="${gPeriod === '30d'}">30 días</button><button data-gp="mes" aria-pressed="${gPeriod === 'mes'}">Este mes</button></div>`;
+    h += `<div class="hero2"><p class="big"><span class="cur">$</span>${int(s.total)}</p><p class="sub">${int(s.kwh)} kWh · ${s.count} ${s.count === 1 ? 'carga' : 'cargas'}</p>`;
+    if (cmp.deltaPct != null) h += `<p class="find">${cmp.deltaPct >= 0 ? '↑' : '↓'} ${Math.abs(Math.round(cmp.deltaPct))}% frente a ${p.vs} (${money(cmp.prev)}).</p>`;
+    h += `</div>`;
+    h += `<h3>Costos</h3><div class="kv"><span>Promedio por kWh</span><b>${s.kwh > 0 ? money2(s.avgPerKwh) : '—'}</b></div>`;
+    h += `<div class="kv"><span>Costo por km<em>${s.costPerKm != null ? 'según tu odómetro' : 'cargá el odómetro en 2 cargas'}</em></span><b>${s.costPerKm != null ? money2(s.costPerKm) : '—'}</b></div>`;
+    h += `<h3>Casa y pública</h3><div class="kv"><span>Casa<em>${int(s.homeKwh)} kWh · ${pct(s.homeKwh, s.kwh)}% de la energía</em></span><b>${money(s.homeCost)}</b></div>`;
+    h += `<div class="kv"><span>Pública<em>${int(s.publicKwh)} kWh · ${pct(s.publicKwh, s.kwh)}% de la energía</em></span><b>${money(s.publicCost)}</b></div>`;
+    h += `<h3>En Casa, por franja</h3>` + (s.homeKwh > 0 ? bands(s.vallePct, s.llanoPct, s.puntaPct) : '<p class="note">Sin cargas en casa este mes.</p>');
+    if (saved > 1) h += `<p class="note">Cargando todo en Valle hubieras gastado ${money(saved)} menos en este período.</p>`;
+    h += `<h3>Últimos 6 meses</h3><div class="bars">${m6.map((x, i) => `<div class="${i === 5 ? 'on' : ''}"><i style="height:${Math.round((x.total / mx) * 60)}px" title="${money(x.total)}"></i>${MONTHS[x.month].slice(0, 3)}</div>`).join('')}</div>`;
+    $('#gasto').innerHTML = h;
+  }
+
+  $('#gasto').addEventListener('click', (e) => { const b = e.target.closest('[data-gp]'); if (b) { gPeriod = b.dataset.gp; $('#gTitle').textContent = gPeriod === 'mes' ? 'Este mes' : 'Últimos 30 días'; renderAll(); } });
+
+  let autoPct = 80;
+  function renderAuto() {
+    const v = S.vehicle, { real, rc } = consumption();
+    const src = { 'real-bateria': `medido en ${rc.samples} ${rc.samples === 1 ? 'tramo' : 'tramos'} (batería)`, 'real-pared': `medido en ${rc.samples} tramos (desde el enchufe)`, homologado: 'del fabricante; cargá odómetro y % para medirlo' }[rc.source];
+    const km = L.rangeAtPct(v.batteryKwh, rc.whKm, autoPct), now = new Date(), s30 = L.statsBetween(S.charges, new Date(now.getTime() - 30 * 864e5), new Date(now.getTime() + 1));
+    let h = `<div class="hero2"><p class="big">≈ ${km}<small>km</small></p><p class="sub">con la batería al <input class="inl" id="a-pct" inputmode="decimal" aria-label="Nivel de batería, en porcentaje" value="${pctTxt(autoPct)}">%</p><p class="find">${dec(L.whKmToKwh100(rc.whKm), 1)} kWh/100 km ${src}.</p>`;
+    h += `<div class="seg wide" role="group" aria-label="Nivel de batería">${[20, 40, 60, 80, 100].map((p) => `<button data-ap="${p}" aria-pressed="${p === autoPct}">${p}%</button>`).join('')}</div></div>`;
+    h += `<h3>Consumo</h3><div class="kv"><span>Real</span><b>${real && (real.batteryWhKm || real.wallWhKm) ? dec(L.whKmToKwh100(real.batteryWhKm || real.wallWhKm * L.ETA_AC), 1) + ' kWh/100 km' : '—'}</b></div>`;
+    h += `<div class="kv"><span>Desde el enchufe<em>incluye pérdidas de carga</em></span><b>${real && real.wallWhKm ? dec(L.whKmToKwh100(real.wallWhKm), 1) + ' kWh/100 km' : '—'}</b></div>`;
+    h += `<div class="kv"><span>Homologado</span><b>${dec(L.whKmToKwh100(v.consumptionWhKm), 1)} kWh/100 km</b></div>`;
+    h += `<div class="kv"><span>Autonomía homologada</span><b>${L.autonomyKm(v.batteryKwh, v.consumptionWhKm)} km</b></div>`;
+    h += `<h3>Mi auto y mi cargador</h3>`;
+    h += `<div class="pair">${field('v-bat', 'Batería (kWh)', `<input id="v-bat" inputmode="decimal" value="${v.batteryKwh}">`)}${field('v-con', 'Consumo (Wh/km)', `<input id="v-con" inputmode="decimal" value="${v.consumptionWhKm}">`)}</div>`;
+    h += `<div class="pair">${field('v-amp', 'Cargador (A)', `<input id="v-amp" inputmode="decimal" value="${S.amps}">`)}${field('v-volt', 'Tensión (V)', `<input id="v-volt" inputmode="decimal" value="${S.volts}">`)}</div>`;
+    h += `<p class="note">${v.name} · cargador de casa ≈ ${dec(nominalKw(), 1)} kW. Costo de los últimos 30 días: ${s30.costPerKm != null ? money2(s30.costPerKm) + '/km' : 'sin datos de odómetro'}.</p>`;
+    $('#auto').innerHTML = h;
+  }
+  $('#auto').addEventListener('click', (e) => { const b = e.target.closest('[data-ap]'); if (b) { autoPct = +b.dataset.ap; const y = $('#auto').scrollTop; renderAuto(); $('#auto').scrollTop = y; } });
+  $('#auto').addEventListener('change', (e) => {
+    const n = num(e.target.value); if (!(n > 0)) return;
+    if (e.target.id === 'a-pct') { autoPct = Math.min(100, r1(n)); const y = $('#auto').scrollTop; renderAuto(); $('#auto').scrollTop = y; return; }
+    ({ 'v-bat': () => (S.vehicle.batteryKwh = n), 'v-con': () => (S.vehicle.consumptionWhKm = n), 'v-amp': () => (S.amps = n), 'v-volt': () => (S.volts = n) }[e.target.id] || (() => {}))();
+    persist(); const y = $('#auto').scrollTop; renderAll(); $('#auto').scrollTop = y;
+  });
+
+  function renderPrecios() {
+    const r = S.rates, ps = S.puntaStart, now = new Date();
+    let h = `<h3>UTE · Triple horaria residencial</h3>`;
+    h += `<div class="pair">${field('r-valle', 'Valle $/kWh', `<input id="r-valle" inputmode="decimal" value="${String(r.valle).replace('.', ',')}">`, '00:00 a 07:00, todos los días')}${field('r-llano', 'Llano $/kWh', `<input id="r-llano" inputmode="decimal" value="${String(r.llano).replace('.', ',')}">`, 'el resto')}</div>`;
+    h += field('r-punta', 'Punta $/kWh', `<input id="r-punta" inputmode="decimal" value="${String(r.punta).replace('.', ',')}">`, `${ps}:00 a ${ps + 4}:00, solo días hábiles`);
+    h += `<div class="seg wide" role="group" aria-label="Inicio de la franja Punta">${L.PUNTA_START_OPTIONS.map((p) => `<button data-ps="${p}" aria-pressed="${p === ps}">Punta ${p}–${p + 4}</button>`).join('')}</div>`;
+    h += `<p class="note">Pliego tarifario 2026. Fines de semana y feriados nacionales fijos no tienen Punta. Cambiar una tarifa no recalcula las cargas ya guardadas.</p>`;
+    const rank = L.rankNetworks(groups(), now, 30);
+    h += `<h3>Cargadores públicos ahora · para 30 kWh</h3>`;
+    h += rank.map((x, i) => `<div class="kv"><span>${x.network}<em>${x.variant.label}${x.variant.fee > 0 ? ` · + ${money(x.variant.fee)} fijo` : ''}</em></span><b>${money2(x.variant.price)}/kWh${i === 0 ? '<em>el más barato ahora</em>' : `<em>efectivo ${money2(x.effective)}</em>`}</b></div>`).join('');
+    h += `<p class="note">Datos ${net.source}${net.at ? ' · ' + shortDate(new Date(net.at)) + ' ' + hhmm(new Date(net.at)) : ''}. Fuente no oficial: evuruguay.com. El efectivo reparte el cargo fijo entre los kWh.</p>`;
+    $('#precios').innerHTML = h;
+  }
+  $('#precios').addEventListener('click', (e) => { const b = e.target.closest('[data-ps]'); if (b) { S.puntaStart = +b.dataset.ps; persist(); const y = $('#precios').scrollTop; renderAll(); $('#precios').scrollTop = y; } });
+  $('#precios').addEventListener('change', (e) => {
+    const k = { 'r-valle': 'valle', 'r-llano': 'llano', 'r-punta': 'punta' }[e.target.id], n = num(e.target.value);
+    if (!k || !(n > 0)) return;
+    S.rates[k] = n; persist();
+  });
+
+  /* ---------- Render general ---------- */
+  function renderTop() {
+    const p = period(new Date()), s = L.statsBetween(S.charges, p.from, p.end);
+    $('#topBar').innerHTML = `<b style="font-weight:400">${money(s.total)}</b> <span>· ${gPeriod === 'mes' ? 'este mes' : '30 días'}</span>`;
+  }
+  function renderAll() {
+    renderTop(); renderList(); renderGasto(); renderAuto(); renderPrecios();
+    if (stack.includes('prog')) renderProg();
+  }
+
+  /* ---------- Arranque ---------- */
+  function fit() {
+    if (innerWidth < 600) { phone.style.transform = ''; return; }
+    phone.style.transform = `scale(${Math.min(1, (innerHeight - 32) / 874)})`;
+  }
+  addEventListener('resize', fit);
+  fit(); renderAll(); homeRail.paint(); loadNetworks();
+  window.__carga = { S, L, openFn, closeFn };
+})();
+</script>
+</body>
+</html>

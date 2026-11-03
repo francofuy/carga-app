@@ -1,0 +1,29 @@
+  <!-- ===== Programar carga (asistente) ===== -->
+  <section class="fn" id="fn-prog" aria-label="Programar carga" inert>
+    <header class="fn-bar w">
+      <button class="icon" id="wBack" aria-label="Atrás"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <div class="dots" id="wDots" role="img"></div>
+      <button class="icon txt" id="wSkip" hidden>Omitir</button>
+    </header>
+    <div class="fn-body">
+      <div class="center">
+        <p class="q" id="wQ" role="status" aria-live="polite"></p>
+        <button class="value" id="wValue" aria-label="Escribir el valor exacto"><span class="num" id="wNum"></span><span class="unit" id="wUnit"></span></button>
+        <input class="value-input" id="wInput" type="text" autocomplete="off" aria-label="Valor" hidden>
+        <p class="meta" id="wCtx"></p>
+        <div id="wBands" style="display:contents"></div>
+        <div id="wExtra" class="wextra"></div>
+      </div>
+      <div class="tray2" id="wTray"></div>
+    </div>
+  </section>
+
+  <!-- ===== Carga en curso ===== -->
+  <section class="fn" id="fn-activa" aria-label="Carga en curso" inert>
+    <header class="fn-bar">
+      <button class="icon" data-close aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button>
+      <h2>Carga en curso</h2><span></span>
+    </header>
+    <div class="fn-body"><div class="scroll" id="activa"></div></div>
+  </section>
+

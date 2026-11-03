@@ -1,0 +1,200 @@
+{
+  "title": "Elegí el mundo visual de Carga",
+  "question": "El sorteo asignó «Recarga de saldo». Quedate con esa, tomá una alternativa o volvé a sortear.",
+  "options": [
+    {
+      "id": "assigned",
+      "kind": "assigned",
+      "label": "Recarga de saldo",
+      "kicker": "EL SORTEO",
+      "lineage": "tarjetas de transporte prepagas y su ritual de recarga en el kiosco",
+      "thesis": "Cargar el auto como recargar saldo: un número de saldo y montos redondos.",
+      "palette": [
+        "#0B2A4A",
+        "#123D6B",
+        "#35C9F2",
+        "#FFD23F"
+      ],
+      "materials": [
+        "azul profundo plano",
+        "montos en teclas grandes"
+      ],
+      "viewport": "Saldo del mes en una tarjeta azul, cuatro montos de kWh en una fila y un botón amarillo de registrar.",
+      "risk": "Puede sentirse más cargado que tu referencia: tiene tarjeta, montos, botón y movimientos a la vez.",
+      "raised": [
+        {
+          "from": "challenger-labanotation",
+          "raise": "Cada movimiento del historial lleva una barra fina cuyo largo es su cantidad de kWh, así el historial se lee como cantidad antes que como texto."
+        }
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html",
+      "htmlFrame": "402x874"
+    },
+    {
+      "id": "model-pick",
+      "kind": "pick",
+      "label": "Mesa de fichas",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "tu referencia: la bandeja de fichas de una app de apuestas",
+      "thesis": "Una pregunta en grande, una ficha verde como única acción.",
+      "palette": [
+        "#000000",
+        "#141414",
+        "#4FB58A",
+        "#8E8E93"
+      ],
+      "materials": [
+        "negro puro",
+        "bandeja por luminosidad",
+        "fichas redondas"
+      ],
+      "viewport": "Total gastado en tipografía liviana al centro; la ficha de registrar sobre una bandeja inferior.",
+      "risk": "Es lo que ya se construyó: seguro, pero con una sola acción hay poco lugar para el historial.",
+      "html": ".impeccable/mocks/decision/model-pick.html",
+      "htmlFrame": "402x874"
+    },
+    {
+      "id": "challenger-warm-consumer",
+      "kind": "challenger",
+      "catalogId": "digital-design-canon-warm-consumer-app-surface",
+      "label": "App cálida de consumo",
+      "verdict": "competitive",
+      "lineage": "apps de consumo con tarjetas blandas y barra inferior",
+      "thesis": "Tarjetas redondeadas sobre fondo cálido y un único color que solo aparece donde se puede tocar.",
+      "palette": [
+        "#F5EEE4",
+        "#FFFFFF",
+        "#E8590C",
+        "#2B2622"
+      ],
+      "materials": [
+        "tarjetas blancas",
+        "radios grandes",
+        "acción naranja"
+      ],
+      "viewport": "Saludo, tarjeta de gasto del mes, casa y pública lado a lado, botón naranja y barra inferior.",
+      "case": "Gana en claridad de producto (se lee como app de iPhone), pierde en identificación: es el opuesto del negro de tu referencia.",
+      "risk": "Es más cargada que lo que pediste: tres tarjetas y una barra de pestañas.",
+      "html": ".impeccable/mocks/decision/challenger-warm-consumer.html",
+      "htmlFrame": "402x874"
+    },
+    {
+      "id": "challenger-labanotation",
+      "kind": "challenger",
+      "catalogId": "notation-diagram-systems-labanotation",
+      "label": "Partitura de baile (Labanotación)",
+      "verdict": "declined",
+      "palette": [
+        "#FFFFFF",
+        "#111111",
+        "#C9C9C9"
+      ],
+      "materials": [
+        "papel de partitura",
+        "bloques negros"
+      ],
+      "case": "Pierde en ambos ejes: nadie con un auto eléctrico se identifica con una partitura de danza.",
+      "kept": "El largo de cada marca es su cantidad exacta."
+    },
+    {
+      "id": "challenger-crouwel",
+      "kind": "challenger",
+      "catalogId": "crouwel-grid-specimen",
+      "label": "Grilla de Crouwel",
+      "verdict": "declined",
+      "palette": [
+        "#FFFFFF",
+        "#2D5BFF",
+        "#111111"
+      ],
+      "materials": [
+        "grilla visible",
+        "letras construidas"
+      ],
+      "case": "Pierde en ambos ejes: es un póster, no una pantalla de trabajo.",
+      "kept": "La grilla como estructura que se nota."
+    },
+    {
+      "id": "challenger-centre-rail",
+      "kind": "challenger",
+      "catalogId": "rw-centre-rail-reference-setting",
+      "label": "Carril central de referencia",
+      "verdict": "declined",
+      "palette": [
+        "#16140F",
+        "#F2EAD6",
+        "#C23A22"
+      ],
+      "materials": [
+        "tinta",
+        "papel hueso"
+      ],
+      "case": "Pierde en ambos ejes: columnas densas de texto chico contradicen la simpleza pedida.",
+      "kept": "Todo trazo a un píxel exacto."
+    },
+    {
+      "id": "challenger-zoo-map",
+      "kind": "challenger",
+      "catalogId": "aww2-zoo-gardens-guide-map",
+      "label": "Mapa de zoológico",
+      "verdict": "declined",
+      "palette": [
+        "#8ED462",
+        "#F5F1E4",
+        "#2C2E2A",
+        "#F5E211"
+      ],
+      "materials": [
+        "color plano",
+        "cápsulas"
+      ],
+      "case": "Pierde en ambos ejes: las manchas de color compiten con el número.",
+      "kept": "Compromiso total con una paleta plana."
+    },
+    {
+      "id": "challenger-variable-font",
+      "kind": "challenger",
+      "catalogId": "variable-font-specimen",
+      "label": "Muestrario de fuente variable",
+      "verdict": "declined",
+      "palette": [
+        "#FAFAFA",
+        "#111111",
+        "#FF4D00"
+      ],
+      "materials": [
+        "papel blanco",
+        "números enormes"
+      ],
+      "case": "Pierde en ambos ejes: el efecto de peso es un truco sin tarea detrás.",
+      "kept": "El número como protagonista a escala enorme."
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "canon": true,
+  "canonCard": {
+    "kind": "canon",
+    "label": "El estándar de la categoría",
+    "thesis": "Una app nativa de iOS: título grande y listas agrupadas del sistema.",
+    "palette": [
+      "#F2F2F7",
+      "#FFFFFF",
+      "#007AFF",
+      "#000000"
+    ],
+    "materials": [
+      "listas agrupadas",
+      "barra de pestañas del sistema"
+    ],
+    "viewport": "Título «Cargas», total del período y las cargas agrupadas por mes.",
+    "risk": "Indistinguible de cualquier app de registro, por diseño.",
+    "html": ".impeccable/mocks/decision/canon.html",
+    "htmlFrame": "402x874"
+  },
+  "steer": true
+}

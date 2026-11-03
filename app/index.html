@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carga">
+<meta name="theme-color" content="#000000">
+<title>Carga</title>
+<style>
+:root {
+  --bg: #000;
+  --sheet: #141414;
+  --chip: #262629;
+  --ink: #fff;
+  --ink-2: #8e8e93;
+  --accent: #4fb58a;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); overscroll-behavior: none; }
+body {
+  display: grid; place-items: center;
+  font-family: var(--font); color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none; user-select: none;
+  font-variant-numeric: tabular-nums;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+ul { list-style: none; }
+
+/* ---------- Teléfono ---------- */
+.phone {
+  position: relative; width: 100%; height: 100dvh; overflow: hidden; background: var(--bg);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.probe { position: absolute; visibility: hidden; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+
+/* Vista previa en escritorio: iPhone 17 Pro, 402 x 874 pt */
+@media (min-width: 600px) {
+  body { background: #0b0b0b; height: 100vh; }
+  .phone {
+    width: 402px; height: 874px; border-radius: 56px; transform-origin: center;
+    box-shadow: 0 0 0 10px #1a1a1a, 0 0 0 11px #2c2c2e;
+    --safe-top: 59px; --safe-bottom: 34px;
+  }
+  .phone::before {
+    content: ""; position: absolute; z-index: 60; top: 11px; left: 50%; width: 126px; height: 37px;
+    margin-left: -63px; border-radius: 20px; background: #000; pointer-events: none;
+  }
+}
+
+/* ---------- Inicio ---------- */
+.home { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.home-bar {
+  padding: calc(var(--safe-top) + 14px) 24px 0; text-align: center;
+  font-size: 15px; color: var(--ink-2);
+}
+.hero {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 24px calc(210px + var(--safe-bottom)); text-align: center;
+}
+.amount {
+  display: flex; align-items: flex-start; justify-content: center;
+  font-size: min(76px, 19vw); font-weight: 300; letter-spacing: -0.04em; line-height: 1;
+}
+.amount .cur { font-size: 0.46em; margin: 0.12em 0.1em 0 0; color: var(--ink-2); letter-spacing: 0; }
+.sub { margin-top: 16px; font-size: 17px; }
+.finding { margin-top: 8px; max-width: 280px; font-size: 15px; line-height: 1.35; color: var(--ink-2); text-wrap: balance; }
+
+/* ---------- Hoja inferior ---------- */
+.scrim {
+  position: absolute; inset: 0; z-index: 10; background: #000; opacity: calc(var(--p, 0) * 0.6);
+  pointer-events: none; transition: opacity 280ms var(--ease-out);
+}
+.sheet-open .scrim { pointer-events: auto; }
+.sheet {
+  position: absolute; z-index: 20; left: 0; right: 0; bottom: 0; background: var(--sheet);
+  border-radius: 44px 44px 0 0; display: flex; flex-direction: column; will-change: transform;
+  transition: transform 420ms var(--ease-drawer);
+}
+.sheet.dragging, .sheet.dragging * { transition: none !important; }
+
+.grab { touch-action: none; }
+.handle {
+  position: relative; display: block; width: 100%; height: 60px; flex: none;
+  padding: 0 24px; text-align: left;
+}
+.handle::before {
+  content: ""; position: absolute; top: 10px; left: 50%; width: 36px; height: 5px; margin-left: -18px;
+  border-radius: 3px; background: #3a3a3c;
+}
+.handle .ttl {
+  position: absolute; left: 24px; top: 24px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+  opacity: clamp(0, calc((var(--p, 0) - 0.3) * 2.5), 1); transition: opacity 240ms var(--ease-out);
+}
+.peek {
+  position: absolute; z-index: 1; top: 34px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center;
+  opacity: clamp(0, calc(1 - var(--p, 0) * 3), 1); transition: opacity 160ms var(--ease-out);
+}
+.sheet.open .peek { pointer-events: none; }
+.go {
+  width: 112px; height: 112px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: grid; place-items: center; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+  transition: transform 140ms var(--ease-out);
+}
+.go:active { transform: scale(0.96); }
+.peek .cap { margin-top: 18px; font-size: 13px; color: var(--ink-2); }
+
+.list {
+  flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 24px calc(var(--safe-bottom) + 24px);
+  opacity: clamp(0, calc((var(--p, 0) - 0.2) * 2), 1); transition: opacity 280ms var(--ease-out);
+  -webkit-overflow-scrolling: touch;
+}
+.list::-webkit-scrollbar { display: none; }
+.month { margin: 22px 0 6px; font-size: 13px; color: var(--ink-2); }
+.month:first-child { margin-top: 6px; }
+.row { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; height: 64px; }
+.row .d { font-size: 15px; color: var(--ink-2); }
+.row b { display: block; font-size: 17px; font-weight: 500; }
+.row i { display: block; margin-top: 3px; font-size: 13px; font-style: normal; color: var(--ink-2); }
+.row .c { font-size: 17px; text-align: right; }
+
+/* ---------- Registrar carga ---------- */
+.log {
+  position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg);
+  opacity: 0; visibility: hidden; transform: translateY(14px);
+  transition: opacity 200ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s 240ms;
+}
+.log.open {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity 220ms var(--ease-out), transform 360ms var(--ease-drawer), visibility 0s;
+}
+.log-bar {
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+  padding: calc(var(--safe-top) + 8px) 16px 0;
+}
+.icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-2); transition: transform 140ms var(--ease-out); }
+.icon:active { transform: scale(0.94); }
+.seg { justify-self: center; display: flex; padding: 3px; border-radius: 999px; background: #151517; }
+.seg button {
+  position: relative; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 15px; color: var(--ink-2);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.seg button::before { content: ""; position: absolute; inset: -4px 0; }
+.seg button[aria-pressed="true"] { background: #2c2c2e; color: var(--ink); }
+
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 24px; }
+.value { display: flex; align-items: baseline; gap: 10px; }
+.value .num { font-size: 104px; font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
+.value .unit { font-size: 26px; color: var(--ink-2); }
+.value-input {
+  width: 260px; background: none; border: 0; text-align: center; color: var(--ink); caret-color: var(--accent);
+  font: inherit; font-size: 104px; font-weight: 200; letter-spacing: -0.04em; line-height: 1;
+  -webkit-user-select: text; user-select: text;
+}
+.meta { margin-top: 18px; font-size: 17px; color: var(--ink-2); }
+
+.tray {
+  position: relative; flex: none; height: calc(262px + var(--safe-bottom)); background: var(--sheet);
+  border-radius: 44px 44px 0 0;
+}
+.pointer { position: absolute; top: 22px; left: 50%; margin-left: -10px; }
+.rail {
+  position: absolute; top: 40px; left: 0; right: 0; height: 140px; display: flex; align-items: center;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail::before, .rail::after { content: ""; flex: 0 0 calc(50% - 50px); }
+.rail.mouse-drag { scroll-snap-type: none; cursor: grabbing; }
+.slot { flex: none; width: 100px; height: 140px; display: grid; place-items: center; scroll-snap-align: center; scroll-snap-stop: always; }
+.slot .c {
+  --k: 0; width: 126px; height: 126px; border-radius: 50%; display: grid; place-items: center; will-change: transform;
+  background: color-mix(in srgb, var(--accent) calc(var(--k) * 100%), var(--chip));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, calc(0.06 + var(--k) * 0.16));
+  color: color-mix(in srgb, #fff calc(var(--k) * 100%), #a0a0a5);
+  font-size: 46px; font-weight: 300; letter-spacing: -0.02em;
+}
+.hint { position: absolute; top: 196px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<main class="phone" id="phone">
+  <div class="probe" id="probe"></div>
+
+  <section class="home" id="home" aria-label="Inicio">
+    <p class="home-bar">Últimos 30 días</p>
+    <div class="hero">
+      <p class="amount" aria-live="polite"><span class="cur">$</span><span id="amount">0</span></p>
+      <p class="sub" id="sub"></p>
+      <p class="finding" id="finding"></p>
+    </div>
+  </section>
+
+  <div class="scrim" id="scrim"></div>
+
+  <section class="sheet" id="sheet" aria-label="Historial de cargas">
+    <div class="grab">
+      <button class="handle" id="handle" aria-expanded="false" aria-label="Historial de cargas"><span class="ttl">Historial</span></button>
+      <div class="peek">
+        <button class="go" id="go" aria-label="Registrar carga">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 8v24M8 20h24"/></svg>
+        </button>
+        <p class="cap">Registrar carga</p>
+      </div>
+    </div>
+    <div class="list" id="list" inert></div>
+  </section>
+
+  <section class="log" id="log" aria-label="Registrar carga" inert>
+    <header class="log-bar">
+      <button class="icon" id="close" aria-label="Cerrar">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l12 12M17 5L5 17"/></svg>
+      </button>
+      <div class="seg" role="group" aria-label="Dónde cargaste">
+        <button data-kind="casa" aria-pressed="true">Casa</button>
+        <button data-kind="publica" aria-pressed="false">Pública</button>
+      </div>
+      <span></span>
+    </header>
+
+    <div class="stage">
+      <button class="value" id="valueBtn" aria-label="Escribir kWh exactos">
+        <span class="num" id="valNum">25</span><span class="unit">kWh</span>
+      </button>
+      <input class="value-input" id="valInput" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="kWh cargados" hidden>
+      <p class="meta" id="meta"></p>
+    </div>
+
+    <div class="tray">
+      <svg class="pointer" width="20" height="10" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 0h20L10 10z" fill="#fff"/></svg>
+      <div class="rail" id="rail"></div>
+      <p class="hint">Tocá el centro para guardar</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const phone = $('#phone');
+
+  /* ---------- Datos (de ejemplo) ---------- */
+  // Fecha fija para que los datos de ejemplo cierren; en la app real: new Date()
+  const TODAY = new Date(2026, 10, 2);
+  const DAY = 864e5;
+  const PRICES = { casa: 95, publica: 310 };
+  const SEED = [
+    ['2026-11-01', 'casa', 22.4], ['2026-10-28', 'publica', 38.0], ['2026-10-24', 'casa', 31.0],
+    ['2026-10-19', 'casa', 27.5], ['2026-10-14', 'publica', 18.2], ['2026-10-09', 'casa', 34.8],
+    ['2026-10-05', 'casa', 29.1], ['2026-09-30', 'casa', 26.0], ['2026-09-24', 'publica', 41.5],
+    ['2026-09-19', 'casa', 30.2],
+  ].map(([date, kind, kwh], i) => ({ id: i + 1, date, kind, kwh, ppk: PRICES[kind] }));
+
+  const KEY = 'carga.v1';
+  let entries = SEED;
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s) && s.length) entries = s; } catch (_) {}
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch (_) {} };
+
+  /* ---------- Formato ---------- */
+  const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const int = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const dec = (n) => n.toFixed(1).replace('.', ',');
+  const cost = (e) => Math.round(e.kwh * e.ppk);
+  const short = (d) => `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+  const kindLabel = { casa: 'Casa', publica: 'Pública' };
+
+  /* ---------- Inicio ---------- */
+  const amountEl = $('#amount');
+  let shown = 0;
+
+  function stats() {
+    const win = entries.filter((e) => (TODAY - parse(e.date)) / DAY < 30);
+    const sum = (list, f) => list.reduce((a, e) => a + f(e), 0);
+    const pub = win.filter((e) => e.kind === 'publica');
+    return {
+      total: sum(win, cost), kwh: sum(win, (e) => e.kwh), n: win.length,
+      pubKwh: sum(pub, (e) => e.kwh), pubCost: sum(pub, cost),
+    };
+  }
+
+  function renderHome(animate) {
+    const s = stats();
+    $('#sub').textContent = `${int(s.kwh)} kWh · ${s.n} ${s.n === 1 ? 'carga' : 'cargas'}`;
+    const casa = s.n > 0 && s.pubKwh < s.kwh;
+    $('#finding').textContent = s.pubKwh > 0 && casa
+      ? `Las cargas públicas fueron el ${Math.round((s.pubKwh / s.kwh) * 100)}% de los kWh y el ${Math.round((s.pubCost / s.total) * 100)}% del gasto.`
+      : '';
+    if (animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const from = shown, to = s.total, t0 = performance.now();
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / 600), e = 1 - Math.pow(1 - k, 3);
+        amountEl.textContent = int(from + (to - from) * e);
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    } else amountEl.textContent = int(s.total);
+    shown = s.total;
+    renderList();
+  }
+
+  function renderList() {
+    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    const groups = new Map();
+    for (const e of sorted) {
+      const m = MONTHS[parse(e.date).getMonth()];
+      if (!groups.has(m)) groups.set(m, []);
+      groups.get(m).push(e);
+    }
+    const row = (e) => `<li class="row"><span class="d">${short(parse(e.date))}</span><span><b>${dec(e.kwh)} kWh</b><i>${kindLabel[e.kind]} · $ ${int(e.ppk)}/kWh</i></span><span class="c">$ ${int(cost(e))}</span></li>`;
+    $('#list').innerHTML = [...groups].map(([m, rows]) =>
+      `<p class="month">${m[0].toUpperCase() + m.slice(1)}</p><ul>${rows.map(row).join('')}</ul>`).join('');
+  }
+
+  /* ---------- Hoja inferior (arrastrable) ---------- */
+  const sheet = $('#sheet'), handle = $('#handle'), scrim = $('#scrim'), list = $('#list');
+  let H = 0, collapsedY = 0, y = 0, isOpen = false, drag = null, suppressClick = false;
+
+  function measure() {
+    const cs = getComputedStyle($('#probe'));
+    const top = parseFloat(cs.paddingTop) || 0, bottom = parseFloat(cs.paddingBottom) || 0;
+    H = phone.offsetHeight - top - 8;
+    collapsedY = H - (212 + bottom);
+    sheet.style.height = H + 'px';
+    place(isOpen ? 0 : collapsedY, false);
+  }
+  function place(v, animate) {
+    y = Math.min(collapsedY, Math.max(0, v));
+    sheet.classList.toggle('dragging', !animate);
+    sheet.style.transform = `translate3d(0, ${y}px, 0)`;
+    const p = 1 - y / collapsedY;
+    sheet.style.setProperty('--p', p.toFixed(3));
+    scrim.style.setProperty('--p', p.toFixed(3));
+  }
+  function snap(open) {
+    isOpen = open;
+    sheet.classList.toggle('open', open);
+    phone.classList.toggle('sheet-open', open);
+    handle.setAttribute('aria-expanded', open);
+    list.inert = !open;
+    place(open ? 0 : collapsedY, true);
+  }
+
+  sheet.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('.grab')) return;
+    drag = { sy: e.clientY, y0: y, ly: e.clientY, lt: performance.now(), v: 0, moved: false };
+  });
+  addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dy = e.clientY - drag.sy;
+    if (!drag.moved && Math.abs(dy) > 6) drag.moved = true;
+    if (!drag.moved) return;
+    const now = performance.now();
+    drag.v = (e.clientY - drag.ly) / (now - drag.lt || 1);
+    drag.ly = e.clientY; drag.lt = now;
+    place(drag.y0 + dy, false);
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.moved) return;
+    suppressClick = true; setTimeout(() => (suppressClick = false), 0);
+    snap(d.v < -0.4 ? true : d.v > 0.4 ? false : y < collapsedY / 2);
+  };
+  addEventListener('pointerup', endDrag);
+  addEventListener('pointercancel', endDrag);
+  handle.addEventListener('click', () => { if (!suppressClick) snap(!isOpen); });
+  scrim.addEventListener('click', () => snap(false));
+
+  /* ---------- Registrar carga ---------- */
+  const log = $('#log'), rail = $('#rail');
+  const VALUES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80];
+  const SLOT = 100;
+  const state = { kind: 'casa', kwh: 25, custom: false, idx: 4 };
+
+  rail.innerHTML = VALUES.map((v, i) =>
+    `<button class="slot" data-i="${i}" aria-label="${v} kWh"><span class="c"><span class="n">${v}</span></span></button>`).join('');
+  const slots = [...rail.querySelectorAll('.slot')];
+  const discs = slots.map((s) => s.firstElementChild);
+  const labels = discs.map((c) => c.firstElementChild);
+
+  let progScroll = false, progTimer = 0;
+  function scrollToIdx(i, smooth) {
+    progScroll = true; clearTimeout(progTimer);
+    progTimer = setTimeout(() => (progScroll = false), smooth ? 700 : 80);
+    rail.scrollTo({ left: i * SLOT, behavior: smooth ? 'smooth' : 'instant' });
+  }
+
+  function paintLabels() {
+    labels.forEach((n, i) => (n.textContent = state.custom && i === state.idx ? dec(state.kwh).replace(',0', '') : VALUES[i]));
+  }
+  function paintValue() {
+    $('#valNum').textContent = dec(state.kwh).replace(',0', '');
+    const ppk = PRICES[state.kind];
+    $('#meta').textContent = `$ ${int(state.kwh * ppk)} · $ ${int(ppk)} por kWh`;
+  }
+  function paintRail() {
+    const c = rail.scrollLeft;
+    for (let i = 0; i < VALUES.length; i++) {
+      const k = Math.max(0, 1 - Math.abs(i * SLOT - c) / SLOT);
+      const s = 0.52 + 0.48 * (k * k * (3 - 2 * k));
+      discs[i].style.transform = `scale(${s.toFixed(3)})`;
+      discs[i].style.setProperty('--k', k.toFixed(3));
+      slots[i].style.zIndex = Math.round(k * 10);
+    }
+    const idx = Math.max(0, Math.min(VALUES.length - 1, Math.round(c / SLOT)));
+    if (idx !== state.idx) {
+      state.idx = idx;
+      if (!progScroll) { state.custom = false; state.kwh = VALUES[idx]; paintValue(); }
+      paintLabels();
+    } else if (!progScroll && state.custom && Math.abs(c - idx * SLOT) > 8) {
+      state.custom = false; state.kwh = VALUES[idx]; paintValue(); paintLabels();
+    }
+  }
+  let raf = 0;
+  rail.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paintRail); }, { passive: true });
+
+  rail.addEventListener('click', (e) => {
+    if (suppressRailClick) return;
+    const slot = e.target.closest('.slot'); if (!slot) return;
+    const i = +slot.dataset.i;
+    if (i === state.idx) return save();
+    state.custom = false; state.kwh = VALUES[i]; paintValue(); scrollToIdx(i, true);
+  });
+
+  // Arrastrar con mouse (vista previa en escritorio)
+  let md = null, suppressRailClick = false;
+  rail.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: rail.scrollLeft, moved: false }; });
+  addEventListener('pointermove', (e) => {
+    if (!md) return;
+    const dx = e.clientX - md.x;
+    if (!md.moved && Math.abs(dx) > 5) { md.moved = true; rail.classList.add('mouse-drag'); }
+    if (md.moved) rail.scrollLeft = md.l - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!md) return;
+    const m = md; md = null;
+    if (!m.moved) return;
+    rail.classList.remove('mouse-drag');
+    suppressRailClick = true; setTimeout(() => (suppressRailClick = false), 0);
+    rail.scrollTo({ left: Math.round(rail.scrollLeft / SLOT) * SLOT, behavior: 'smooth' });
+  });
+
+  // Dónde cargaste
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+    state.kind = b.dataset.kind;
+    document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    paintValue();
+  }));
+
+  // kWh exactos
+  const valueBtn = $('#valueBtn'), valInput = $('#valInput');
+  valueBtn.addEventListener('click', () => {
+    valueBtn.hidden = true; valInput.hidden = false;
+    valInput.value = dec(state.kwh).replace(',0', '');
+    valInput.focus(); valInput.select();
+  });
+  function commitInput() {
+    if (valInput.hidden) return;
+    const v = parseFloat(valInput.value.replace(',', '.'));
+    valInput.hidden = true; valueBtn.hidden = false;
+    if (!isFinite(v) || v <= 0) return;
+    state.kwh = Math.min(200, Math.round(v * 10) / 10);
+    const near = VALUES.reduce((b, x, i) => (Math.abs(x - state.kwh) < Math.abs(VALUES[b] - state.kwh) ? i : b), 0);
+    state.custom = true; state.idx = near;
+    paintValue(); paintLabels(); scrollToIdx(near, true);
+  }
+  valInput.addEventListener('blur', commitInput);
+  valInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') valInput.blur(); });
+
+  function openLog() {
+    state.kind = 'casa'; state.kwh = 25; state.custom = false; state.idx = VALUES.indexOf(25);
+    document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.kind === 'casa'));
+    paintValue(); paintLabels();
+    log.inert = false; log.classList.add('open');
+    $('#home').inert = true; sheet.inert = true;
+    scrollToIdx(state.idx, false); paintRail();
+  }
+  function closeLog() {
+    log.classList.remove('open'); log.inert = true;
+    $('#home').inert = false; sheet.inert = false;
+  }
+  function save() {
+    entries = [{ id: Date.now(), date: iso(TODAY), kind: state.kind, kwh: state.kwh, ppk: PRICES[state.kind] }, ...entries];
+    persist(); closeLog(); snap(false);
+    setTimeout(() => renderHome(true), 180);
+  }
+
+  $('#go').addEventListener('click', () => { if (!suppressClick) openLog(); });
+  $('#close').addEventListener('click', closeLog);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') (log.classList.contains('open') ? closeLog() : snap(false)); });
+
+  /* ---------- Arranque ---------- */
+  function fit() {
+    if (innerWidth < 600) { phone.style.transform = ''; return; }
+    phone.style.transform = `scale(${Math.min(1, (innerHeight - 32) / 874)})`;
+  }
+  addEventListener('resize', () => { fit(); measure(); });
+  fit(); measure(); renderHome(false); paintRail();
+})();
+</script>
+</body>
+</html>

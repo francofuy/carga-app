@@ -1,0 +1,2 @@
+- [Decimales en valores de carga](feedback-decimal-precision.md) — kWh hasta 2 decimales, % hasta 1; regla + ajuste fino + teclado
+- [No copiar el diseño del repo](feedback-no-copy-repo-design.md) — de carga-ev solo la lógica, nada de diseño

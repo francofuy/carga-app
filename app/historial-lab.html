@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Historial · exploración</title>
+<style>
+:root {
+  --bg: #000; --sheet: #141414; --line: #1a1a1a; --ink: #fff; --ink-2: #8e8e93; --accent: #4fb58a; --warn: #e5a93b;
+  --valle: #4fb58a; --llano: #8e8e93; --punta: #fff;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { height: 100%; background: var(--bg); overscroll-behavior: none; }
+body { display: grid; place-items: center; font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; font-variant-numeric: tabular-nums; touch-action: manipulation; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; text-align: inherit; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ul, ol { list-style: none; }
+
+.phone { position: relative; width: 100%; height: 100dvh; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 600px) {
+  body { background: #0b0b0b; height: 100vh; }
+  .phone { width: 402px; height: 874px; border-radius: 56px; transform-origin: center; outline: 10px solid #1a1a1a; --safe-top: 59px; --safe-bottom: 34px; }
+  .phone::before { content: ""; position: absolute; z-index: 80; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: #000; pointer-events: none; }
+}
+
+/* selector de variantes: solo para explorar, fuera de la app */
+.pick { position: fixed; z-index: 200; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: #1c1c1e; font-size: 13px; }
+.pick button { height: 32px; padding: 0 14px; border-radius: 999px; color: var(--ink-2); white-space: nowrap; }
+.pick button[aria-pressed="true"] { background: #2c2c2e; color: var(--ink); }
+
+.v { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+.head { flex: none; padding: calc(var(--safe-top) + 12px) 20px 0; }
+.ttl { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; }
+.sub { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
+.sub b { font-weight: 500; color: var(--ink); }
+.tabs { display: flex; gap: 22px; margin-top: 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
+.tabs button { position: relative; height: 44px; margin-bottom: -1px; }
+.tabs button[aria-pressed="true"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px calc(var(--safe-bottom) + 24px); }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* franjas: Valle / Llano / Punta, de abajo hacia arriba o de izquierda a derecha */
+.stackh { display: flex; gap: 1px; height: 4px; }
+.stackh i { display: block; min-width: 1px; }
+.stackv { display: flex; flex-direction: column-reverse; gap: 1px; width: 100%; }
+.stackv i { display: block; min-height: 1px; }
+.v1 { background: var(--valle); } .v2 { background: var(--llano); } .v3 { background: var(--punta); }
+.outl { box-shadow: inset 0 0 0 1.5px var(--llano); background: transparent; }
+.legend { display: flex; gap: 14px; margin-top: 12px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -0.5px; }
+.legend .l1::before { background: var(--valle); } .legend .l2::before { background: var(--llano); } .legend .l3::before { background: var(--punta); } .legend .l4::before { box-shadow: inset 0 0 0 1.5px var(--llano); }
+
+/* detalle de una carga */
+.det { padding: 6px 0 14px; }
+.det .kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+.det .kv span { color: var(--ink-2); }
+.det .kv b { font-weight: 500; text-align: right; }
+.det .kv em { color: var(--ink-2); font-style: normal; font-weight: 400; margin-left: 6px; }
+.det .stackh { margin: 4px 0 6px; height: 5px; }
+.det .del { margin-top: 6px; height: 40px; padding: 0 14px; border-radius: 10px; background: #1c1c1e; color: #ff6b6b; font-size: 14px; }
+
+/* ---------- A. Calendario ---------- */
+.mhead { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.mhead h2 { font-size: 20px; font-weight: 600; text-transform: capitalize; }
+.mhead div { display: flex; }
+.mnav { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: 50%; transition: transform 140ms var(--ease-out); }
+.mnav:active { transform: scale(0.92); }
+.mnav svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wk { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 8px; font-size: 12px; color: var(--ink-2); text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 2px; }
+.gridwrap.slide { animation: slide 240ms var(--ease-out); }
+.gridwrap.slide.back { animation-name: slideb; }
+@keyframes slide { from { transform: translateX(18px); opacity: 0; } }
+@keyframes slideb { from { transform: translateX(-18px); opacity: 0; } }
+.day { position: relative; height: 62px; padding: 6px 0 0; border-radius: 10px; display: flex; flex-direction: column; align-items: center; transition: background-color 140ms ease; }
+.day:active { background: #101010; }
+.day .dn { font-size: 12px; color: var(--ink-2); line-height: 1; }
+.day.today .dn { color: var(--ink); font-weight: 600; }
+.day.today .dn::after { content: ""; display: block; height: 2px; margin: 3px auto 0; width: 12px; background: var(--ink); }
+.day .bars { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; align-items: flex-end; gap: 3px; height: 38px; }
+.day .bars > span { display: flex; width: 12px; }
+.day[aria-pressed="true"] { background: var(--sheet); box-shadow: inset 0 0 0 1px #3a3a3c; }
+.cal-det { flex: 1; min-height: 0; margin-top: 10px; border-top: 1px solid var(--line); overflow-y: auto; padding: 14px 20px calc(var(--safe-bottom) + 20px); }
+.cal-det::-webkit-scrollbar { display: none; }
+.cal-det h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.cal-det .none { margin-top: 6px; font-size: 14px; color: var(--ink-2); }
+.cd { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.cd:last-child { border: 0; }
+.cd .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 17px; }
+.cd .top b { font-weight: 500; }
+.cd .top span { font-weight: 400; }
+.cd .l2 { margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+
+/* ---------- B. Libro mayor ---------- */
+.sort { display: flex; align-items: center; gap: 18px; padding: 12px 0 4px; font-size: 13px; color: var(--ink-2); }
+.sort button { height: 36px; }
+.sort button[aria-pressed="true"] { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+.mon { position: sticky; top: 0; z-index: 3; background: var(--bg); padding: 14px 0 8px; border-bottom: 1px solid var(--line); }
+.mon > button { display: flex; width: 100%; align-items: baseline; justify-content: space-between; min-height: 44px; }
+.mon .n { font-size: 17px; font-weight: 600; text-transform: capitalize; display: flex; align-items: center; gap: 8px; }
+.mon .n svg { width: 12px; height: 12px; fill: none; stroke: var(--ink-2); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 200ms var(--ease-out); }
+.mon[data-open="false"] .n svg { transform: rotate(-90deg); }
+.mon .t { font-size: 17px; }
+.mon .s { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.mon .mbar { height: 2px; margin-top: 8px; background: var(--ink); }
+.rows { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 260ms var(--ease-out); }
+.rows[data-open="false"] { grid-template-rows: 0fr; }
+.rows > ul { overflow: hidden; min-height: 0; }
+.rw { border-bottom: 1px solid var(--line); }
+.rwb { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; width: 100%; min-height: 60px; padding: 8px 0 4px; transition: background-color 140ms ease; }
+.rwb:active { background: #0d0d0d; }
+.rwb .d { font-size: 14px; color: var(--ink-2); }
+.rwb b { display: block; font-size: 17px; font-weight: 500; }
+.rwb i { display: block; margin-top: 2px; font-size: 13px; font-style: normal; color: var(--ink-2); }
+.rwb .c { font-size: 17px; text-align: right; }
+.rwb .c small { display: block; font-size: 12px; color: var(--ink-2); }
+.rbar { height: 3px; margin: 2px 0 8px 44px; }
+.rbar .stackh, .rbar .outl { height: 3px; }
+.rbar > div { height: 3px; display: flex; }
+.exp { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 240ms var(--ease-out); }
+.rw.open .exp { grid-template-rows: 1fr; }
+.exp > div { overflow: hidden; min-height: 0; padding-left: 44px; }
+.rk { display: grid; grid-template-columns: 24px 1fr auto; }
+.rk .rn { align-self: center; font-size: 13px; color: var(--ink-2); text-align: left; }
+
+/* ---------- C. Ruta ---------- */
+.odo { display: flex; justify-content: space-between; align-items: baseline; }
+.odo .big { font-size: 24px; font-weight: 600; }
+.odo .big small { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 4px; }
+.scale { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); }
+.scale button { height: 44px; }
+.scale button[aria-pressed="true"] { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+.route { position: relative; padding-top: 8px; }
+.stop { position: relative; display: grid; grid-template-columns: 58px 28px 1fr; min-height: 64px; }
+.stop .od { padding-top: 11px; font-size: 12px; color: var(--ink-2); text-align: right; line-height: 1.2; }
+.stop .od span { display: block; font-size: 11px; opacity: 0.9; }
+.stop .ln { position: relative; }
+.stop .ln::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: #2a2a2c; }
+.stop .dot { position: absolute; left: 8px; top: 13px; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--bg); }
+.stop.pub .dot { background: var(--bg); box-shadow: inset 0 0 0 2px var(--ink), 0 0 0 3px var(--bg); }
+.stop:first-child .ln::before { top: 18px; }
+.stop .inf { padding: 8px 0 6px 4px; }
+.stop .inf > button { display: block; width: 100%; padding: 3px 0; min-height: 44px; }
+.stop .l1 { display: flex; justify-content: space-between; font-size: 17px; }
+.stop .l1 b { font-weight: 500; }
+.stop .l2 { margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+.leg { position: relative; display: grid; grid-template-columns: 58px 28px 1fr; }
+.leg .ln { position: relative; }
+.leg .ln::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: #2a2a2c; }
+.leg.gap .ln::before { background: none; border-left: 2px dashed #2a2a2c; width: 0; }
+.leg .lb { align-self: center; padding: 0 0 0 4px; font-size: 13px; color: var(--ink-2); text-align: left; min-height: 36px; }
+.leg .lb b { font-weight: 500; color: var(--ink); }
+.leg .lb.hi b { color: var(--warn); }
+.leg .why { display: block; margin-top: 2px; font-size: 12px; }
+.stop .exp > div { padding-left: 4px; }
+.stop.open .exp { grid-template-rows: 1fr; }
+.endcap .ln::before { bottom: auto; height: 14px; }
+.hint { padding: 18px 0 0 90px; font-size: 12px; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<nav class="pick" aria-label="Variante">
+  <button data-v="cal" aria-pressed="true">Calendario</button>
+  <button data-v="mayor" aria-pressed="false">Libro mayor</button>
+  <button data-v="ruta" aria-pressed="false">Ruta</button>
+</nav>
+<main class="phone" id="phone">
+  <section class="v" id="v-cal"></section>
+  <section class="v" id="v-mayor" hidden></section>
+  <section class="v" id="v-ruta" hidden></section>
+</main>
+
+<script src="logic.js"></script>
+<script>
+(() => {
+  'use strict';
+  const L = CargaLogic;
+  const $ = (s) => document.querySelector(s);
+  const phone = $('#phone');
+
+  /* ---------- Formato (es-UY) ---------- */
+  const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const cap = (s) => s[0].toUpperCase() + s.slice(1);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const int = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const dec = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');
+  function fmtNum(n, min, max) { const k = 10 ** max; const [i, f0 = ''] = (Math.round(n * k) / k).toFixed(max).split('.'); let f = f0.replace(/0+$/, ''); while (f.length < min) f += '0'; return f ? `${i},${f}` : i; }
+  const kwhTxt = (n) => fmtNum(n, 1, 2), pctTxt = (n) => fmtNum(n, 0, 1);
+  const money = (n) => '$ ' + int(n), money2 = (n) => '$ ' + dec(n, 2);
+  const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const shortDate = (d) => `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+  const fmtDur = (m) => { m = Math.round(m); const h = Math.floor(m / 60); return h ? `${h} h ${m % 60} min` : `${m} min`; };
+
+  /* ---------- Datos: los mismos de ejemplo de la app (dos sin odómetro, para ver ese caso) ---------- */
+  const NOW = new Date();
+  let charges = L.makeSeed(NOW);
+  [3, 8].forEach((i) => { charges[i] = { ...charges[i], odometerKm: null }; });
+  const B = 60;
+  const time = (c) => new Date(c.startAt);
+  const byDateDesc = () => [...charges].sort((a, b) => time(b) - time(a));
+
+  /* ---------- Piezas compartidas ---------- */
+  /** Barra de franjas de una carga en Casa (Valle / Llano / Punta); contorno para las públicas, que no tienen franja. */
+  function stackH(c) {
+    if (c.location === 'public') return '<div class="outl" style="height:100%"></div>';
+    const t = c.valleKwh + c.llanoKwh + c.puntaKwh || 1;
+    return `<div class="stackh" style="width:100%">${[['v1', c.valleKwh], ['v2', c.llanoKwh], ['v3', c.puntaKwh]].map(([k, v]) => `<i class="${k}" style="flex:${v / t}"></i>`).join('')}</div>`;
+  }
+  const where = (c) => (c.location === 'home' ? `Casa · Valle ${Math.round((c.valleKwh / c.kwh) * 100)}%` : esc(c.network || 'Pública'));
+  const pctLine = (c) => (c.startPct != null ? ` · ${pctTxt(c.startPct)}→${pctTxt(c.endPct)}%` : '');
+  function detail(c) {
+    const d = time(c), kv = (l, v, em = '') => `<div class="kv"><span>${l}</span><b>${v}${em ? `<em>${em}</em>` : ''}</b></div>`;
+    let h = '<div class="det">';
+    if (c.location === 'home') { const e = new Date(c.endAt); h += kv('Horario', `${hhmm(d)} → ${hhmm(e)}`, fmtDur((e - d) / 60000)); h += `<div class="stackh">${[['v1', c.valleKwh], ['v2', c.llanoKwh], ['v3', c.puntaKwh]].map(([k, v]) => `<i class="${k}" style="flex:${v / c.kwh || 0.0001}"></i>`).join('')}</div>`; h += kv('Franjas', `Valle ${Math.round((c.valleKwh / c.kwh) * 100)}%`, `Llano ${Math.round((c.llanoKwh / c.kwh) * 100)}% · Punta ${Math.round((c.puntaKwh / c.kwh) * 100)}%`); }
+    else { h += kv('Red', esc(c.network || 'Pública')); h += kv('Precio', `${money2(c.pricePerKwh)}/kWh`, c.fixedFee > 0 ? `+ ${money(c.fixedFee)} fijo` : ''); }
+    if (c.startPct != null) h += kv('Batería', `${pctTxt(c.startPct)} → ${pctTxt(c.endPct)}%`);
+    h += kv('Odómetro', c.odometerKm != null ? `${int(c.odometerKm)} km` : '—');
+    h += kv('Costo por kWh', money2(c.cost / c.kwh));
+    return h + `<button class="del" data-del="${c.id}">Eliminar esta carga</button></div>`;
+  }
+  const legendHtml = '<div class="legend"><span class="l1">Valle</span><span class="l2">Llano</span><span class="l3">Punta</span><span class="l4">Pública</span></div>';
+  const FILTERS = [['all', 'Todas'], ['home', 'Casa'], ['public', 'Pública']];
+  const tabsHtml = (cur) => `<div class="tabs" role="group" aria-label="Filtrar">${FILTERS.map(([k, l]) => `<button data-f="${k}" aria-pressed="${cur === k}">${l}</button>`).join('')}</div>`;
+  const chev = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>';
+  function removeCharge(id) { if (confirm('¿Eliminar esta carga? No se puede deshacer.')) { charges = charges.filter((c) => c.id !== Number(id)); renderAll(); } }
+
+  /* ================= A. Calendario ================= */
+  const A = { y: NOW.getFullYear(), m: NOW.getMonth(), sel: undefined, f: 'all', lastF: 'all', dir: 0 };
+  const maxKwh = () => Math.max(...charges.map((c) => c.kwh), 1);
+  function renderCal() {
+    const list = charges.filter((c) => A.f === 'all' || c.location === A.f);
+    const first = new Date(A.y, A.m, 1), lead = (first.getDay() + 6) % 7, days = new Date(A.y, A.m + 1, 0).getDate();
+    const inMonth = list.filter((c) => time(c).getFullYear() === A.y && time(c).getMonth() === A.m);
+    const byDay = new Map(); inMonth.forEach((c) => { const d = time(c).getDate(); if (!byDay.has(d)) byDay.set(d, []); byDay.get(d).push(c); });
+    // al cambiar de mes (o filtro) se elige solo el último día con cargas; un toque en un día vacío lo respeta
+    if (A.sel === undefined || (A.sel != null && A.f !== A.lastF)) A.sel = byDay.size ? Math.max(...byDay.keys()) : null;
+    A.lastF = A.f;
+    const tot = inMonth.reduce((a, c) => a + c.cost, 0), kwh = inMonth.reduce((a, c) => a + c.kwh, 0);
+    const cells = [];
+    for (let i = 0; i < Math.ceil((lead + days) / 7) * 7; i++) {
+      const d = i - lead + 1;
+      if (d < 1 || d > days) { cells.push('<span></span>'); continue; }
+      const cs = byDay.get(d) || [], isToday = A.y === NOW.getFullYear() && A.m === NOW.getMonth() && d === NOW.getDate();
+      const bars = cs.map((c) => {
+        const h = Math.max(4, (c.kwh / maxKwh()) * 38);
+        if (c.location === 'public') return `<span style="height:${h}px"><div class="outl" style="width:100%;height:100%"></div></span>`;
+        const t = c.valleKwh + c.llanoKwh + c.puntaKwh;
+        return `<span style="height:${h}px"><span class="stackv" style="height:100%">${[['v1', c.valleKwh], ['v2', c.llanoKwh], ['v3', c.puntaKwh]].map(([k, v]) => `<i class="${k}" style="flex:${v / t};${v / t < 0.001 ? 'display:none' : ''}"></i>`).join('')}</span></span>`;
+      }).join('');
+      const lbl = `${d} de ${MONTHS[A.m]}${cs.length ? `, ${cs.length} ${cs.length === 1 ? 'carga' : 'cargas'}, ${kwhTxt(cs.reduce((a, c) => a + c.kwh, 0))} kWh` : ', sin cargas'}`;
+      cells.push(`<button class="day${isToday ? ' today' : ''}" data-d="${d}" aria-label="${lbl}" aria-pressed="${A.sel === d}"><span class="dn">${d}</span><span class="bars">${bars}</span></button>`);
+    }
+    const selCs = A.sel != null ? byDay.get(A.sel) || [] : [];
+    const selDate = A.sel != null ? new Date(A.y, A.m, A.sel) : null;
+    $('#v-cal').innerHTML = `<div class="head"><h1 class="ttl">Historial</h1>${tabsHtml(A.f)}
+      <div class="mhead"><h2>${MONTHS[A.m]} ${A.y}</h2><div><button class="mnav" data-nav="-1" aria-label="Mes anterior"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M12 4l-6 6 6 6"/></svg></button><button class="mnav" data-nav="1" aria-label="Mes siguiente"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M8 4l6 6-6 6"/></svg></button></div></div>
+      <p class="sub"><b>${money(tot)}</b> · ${int(kwh)} kWh · ${inMonth.length} ${inMonth.length === 1 ? 'carga' : 'cargas'}</p>
+      <div class="wk">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span>${x}</span>`).join('')}</div>
+      <div class="gridwrap${A.dir ? ' slide' + (A.dir < 0 ? ' back' : '') : ''}"><div class="grid">${cells.join('')}</div></div>${legendHtml}</div>
+      <div class="cal-det">${selDate ? `<h3>${cap(DOW[selDate.getDay()])} ${selDate.getDate()} de ${MONTHS[selDate.getMonth()]}</h3>` : '<p class="none">Tocá un día para ver sus cargas.</p>'}
+        ${selCs.map((c) => `<div class="cd"><div class="top"><b>${kwhTxt(c.kwh)} kWh</b><span>${money(c.cost)}</span></div><div class="l2">${where(c)}${pctLine(c)}</div>${detail(c)}</div>`).join('')}
+        ${selDate && !selCs.length ? '<p class="none">Sin cargas ese día.</p>' : ''}</div>`;
+    A.dir = 0;
+  }
+  $('#v-cal').addEventListener('click', (e) => {
+    const f = e.target.closest('[data-f]'), n = e.target.closest('[data-nav]'), d = e.target.closest('[data-d]'), del = e.target.closest('[data-del]');
+    if (f) { A.f = f.dataset.f; renderCal(); }
+    else if (n) { const k = Number(n.dataset.nav); const dt = new Date(A.y, A.m + k, 1); A.y = dt.getFullYear(); A.m = dt.getMonth(); A.sel = undefined; A.dir = k; renderCal(); }
+    else if (d) { A.sel = Number(d.dataset.d); renderCal(); }
+    else if (del) removeCharge(del.dataset.del);
+  });
+  (function swipeMonths() { // deslizar el calendario cambia de mes
+    let x0 = null, y0 = 0;
+    $('#v-cal').addEventListener('pointerdown', (e) => { if (e.target.closest('.gridwrap')) { x0 = e.clientX; y0 = e.clientY; } });
+    $('#v-cal').addEventListener('pointerup', (e) => {
+      if (x0 == null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { const k = dx < 0 ? 1 : -1, dt = new Date(A.y, A.m + k, 1); A.y = dt.getFullYear(); A.m = dt.getMonth(); A.sel = undefined; A.dir = k; renderCal(); }
+    });
+  })();
+
+  /* ================= B. Libro mayor ================= */
+  const M = { f: 'all', sort: 'date', closed: new Set(), sel: null };
+  function rowHtml(c, scaleMax, metric, rank) {
+    const d = time(c), w = Math.max(1.5, (metric(c) / scaleMax) * 100);
+    const right = metric === byPerKwh ? `${money2(c.cost / c.kwh)}<small>por kWh</small>` : money(c.cost);
+    return `<li class="rw${M.sel === c.id ? ' open' : ''}${rank ? ' rk' : ''}" data-id="${c.id}">${rank ? `<span class="rn">${rank}.</span>` : ''}<div><button class="rwb" aria-expanded="${M.sel === c.id}" style="grid-template-columns:${rank ? '0' : '44px'} 1fr auto"><span class="d" ${rank ? 'hidden' : ''}>${shortDate(d)}</span><span><b>${kwhTxt(c.kwh)} kWh</b><i>${rank ? shortDate(d) + ' · ' : ''}${where(c)}${pctLine(c)}</i></span><span class="c">${right}</span></button>
+      <div class="rbar" style="margin-left:${rank ? 0 : 44}px"><div style="width:${w}%">${stackH(c)}</div></div><div class="exp"><div style="padding-left:${rank ? 0 : 44}px">${M.sel === c.id ? detail(c) : ''}</div></div></div></li>`;
+  }
+  const byCost = (c) => c.cost, byPerKwh = (c) => c.cost / c.kwh;
+  function renderMayor() {
+    const list = charges.filter((c) => M.f === 'all' || c.location === M.f);
+    const maxCost = Math.max(...charges.map(byCost), 1), maxPer = Math.max(...charges.map(byPerKwh), 1);
+    let body = '';
+    if (M.sort === 'date') {
+      const groups = new Map();
+      byDateDesc().filter((c) => M.f === 'all' || c.location === M.f).forEach((c) => { const k = `${time(c).getFullYear()}-${time(c).getMonth()}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(c); });
+      const totals = [...groups.values()].map((g) => g.reduce((a, c) => a + c.cost, 0)), maxT = Math.max(...totals, 1);
+      body = [...groups].map(([k, g], i) => {
+        const open = !M.closed.has(k), t = totals[i], kwh = g.reduce((a, c) => a + c.kwh, 0), m = time(g[0]);
+        return `<section class="mon" data-open="${open}"><button data-m="${k}" aria-expanded="${open}"><span class="n">${chev}${MONTHS[m.getMonth()]}</span><span class="t">${money(t)}</span></button><div class="s"><span>${g.length} ${g.length === 1 ? 'carga' : 'cargas'} · ${int(kwh)} kWh</span><span>${money2(t / kwh)}/kWh</span></div><div class="mbar" style="width:${(t / maxT) * 100}%"></div></section>
+          <div class="rows" data-open="${open}"><ul>${g.map((c) => rowHtml(c, maxCost, byCost)).join('')}</ul></div>`;
+      }).join('');
+    } else {
+      const metric = M.sort === 'cost' ? byCost : byPerKwh, mx = M.sort === 'cost' ? maxCost : maxPer;
+      body = `<ol>${[...list].sort((a, b) => metric(b) - metric(a)).map((c, i) => rowHtml(c, mx, metric, i + 1)).join('')}</ol>`;
+    }
+    const tot = list.reduce((a, c) => a + c.cost, 0), kwh = list.reduce((a, c) => a + c.kwh, 0);
+    $('#v-mayor').innerHTML = `<div class="head"><h1 class="ttl">Historial</h1><p class="sub"><b>${money(tot)}</b> · ${int(kwh)} kWh · ${list.length} cargas</p>${tabsHtml(M.f)}
+      <div class="sort"><span>Ordenar por</span>${[['date', 'Fecha'], ['cost', 'Costo'], ['perkwh', '$/kWh']].map(([k, l]) => `<button data-s="${k}" aria-pressed="${M.sort === k}">${l}</button>`).join('')}</div></div>
+      <div class="scroll">${body}${legendHtml}</div>`;
+  }
+  $('#v-mayor').addEventListener('click', (e) => {
+    const f = e.target.closest('[data-f]'), s = e.target.closest('[data-s]'), m = e.target.closest('[data-m]'), del = e.target.closest('[data-del]'), row = e.target.closest('.rwb');
+    if (f) { M.f = f.dataset.f; M.sel = null; renderMayor(); }
+    else if (s) { M.sort = s.dataset.s; M.sel = null; renderMayor(); }
+    else if (m) { const y = $('#v-mayor .scroll').scrollTop; M.closed.has(m.dataset.m) ? M.closed.delete(m.dataset.m) : M.closed.add(m.dataset.m); renderMayor(); $('#v-mayor .scroll').scrollTop = y; }
+    else if (del) removeCharge(del.dataset.del);
+    else if (row) { const id = Number(row.closest('.rw').dataset.id); const y = $('#v-mayor .scroll').scrollTop; M.sel = M.sel === id ? null : id; renderMayor(); $('#v-mayor .scroll').scrollTop = y; }
+  });
+
+  /* ================= C. Ruta por odómetro ================= */
+  const Rt = { scale: 'km', sel: null };
+  /** Tramos entre cargas consecutivas con odómetro: km, energía usada (lado batería si hay %) y kWh/100 km. */
+  function legsOf(asc) {
+    const out = new Map();
+    for (let i = 1; i < asc.length; i++) {
+      const a = asc[i - 1], b = asc[i];
+      if (a.odometerKm == null || b.odometerKm == null || b.odometerKm <= a.odometerKm) continue;
+      const km = b.odometerKm - a.odometerKm, used = a.endPct != null && b.startPct != null ? ((a.endPct - b.startPct) / 100) * B : b.kwh;
+      out.set(b.id, { km, used, from: a.endPct, to: b.startPct, per100: (used / km) * 100 });
+    }
+    return out;
+  }
+  function renderRuta() {
+    const asc = [...charges].sort((a, b) => time(a) - time(b)), legs = legsOf(asc), desc = [...asc].reverse();
+    const tk = [...legs.values()].reduce((a, l) => a + l.km, 0), tu = [...legs.values()].reduce((a, l) => a + l.used, 0), avg = tk ? (tu / tk) * 100 : 0;
+    const worst = [...legs].sort((a, b) => b[1].per100 - a[1].per100)[0];
+    const hiId = worst && worst[1].per100 > avg * 1.12 ? worst[0] : null;
+    const head = `<div class="head"><div class="odo"><h1 class="ttl">Historial</h1><span class="big" id="odoNow">—<small>km</small></span></div>
+      <p class="sub"><b>${int(tk)} km</b> · ${legs.size} tramos · ${dec(avg, 1)} kWh/100 km</p>
+      <div class="scale" role="group" aria-label="Escala"><span style="align-self:center">Escala</span><button data-sc="km" aria-pressed="${Rt.scale === 'km'}">Por km</button><button data-sc="eq" aria-pressed="${Rt.scale === 'eq'}">Iguales</button></div></div>`;
+    const rows = desc.map((c, i) => {
+      const d = time(c), leg = legs.get(desc[i - 1] ? desc[i - 1].id : -1);
+      // el tramo entre esta carga y la más nueva (la de arriba)
+      let legHtml = '';
+      if (i > 0) {
+        const newer = desc[i - 1], lg = legs.get(newer.id);
+        const h = lg ? (Rt.scale === 'km' ? Math.min(150, Math.max(52, lg.km * 0.3)) : 64) : 48;
+        legHtml = `<div class="leg${lg ? '' : ' gap'}" style="min-height:${h}px"><span></span><span class="ln"></span><button class="lb${hiId === newer.id ? ' hi' : ''}" data-leg="${newer.id}">${lg ? `<b>${int(lg.km)} km</b> · ${dec(lg.per100, 1)} kWh/100 km${Rt.sel === 'leg' + newer.id ? `<span class="why">Usaste ${dec(lg.used, 1)} kWh${lg.from != null ? ` (de ${pctTxt(lg.from)}% a ${pctTxt(lg.to)}%)` : ''}</span>` : ''}` : 'sin odómetro en una de las dos'}</button></div>`;
+      }
+      return `${legHtml}<div class="stop${c.location === 'public' ? ' pub' : ''}${Rt.sel === c.id ? ' open' : ''}" data-odo="${c.odometerKm ?? ''}" data-id="${c.id}"><div class="od">${c.odometerKm != null ? int(c.odometerKm) : '—'}<span>${c.odometerKm != null ? 'km' : ''}</span></div><div class="ln"><i class="dot"></i></div>
+        <div class="inf"><button aria-expanded="${Rt.sel === c.id}"><div class="l1"><b>${kwhTxt(c.kwh)} kWh</b><span>${money(c.cost)}</span></div><div class="l2">${shortDate(d)} · ${where(c)}${pctLine(c)}</div></button><div class="exp"><div>${Rt.sel === c.id ? detail(c) : ''}</div></div></div></div>`;
+    }).join('');
+    $('#v-ruta').innerHTML = head + `<div class="scroll"><div class="route">${rows}</div><p class="hint">Cada tramo muestra cuánto manejaste entre dos cargas y cuánto consumiste. Tocalo para ver el detalle.</p></div>`;
+    updateOdo();
+  }
+  /** El kilometraje de la cabecera sigue a la carga que está arriba de la lista mientras se desliza. */
+  function updateOdo() {
+    const sc = $('#v-ruta .scroll'); if (!sc) return;
+    const top = sc.getBoundingClientRect().top, stops = [...sc.querySelectorAll('.stop')];
+    const cur = stops.find((s) => s.getBoundingClientRect().bottom > top + 20 && s.dataset.odo !== '') || stops.find((s) => s.dataset.odo !== '');
+    $('#odoNow').innerHTML = `${cur ? int(Number(cur.dataset.odo)) : '—'}<small>km</small>`;
+  }
+  $('#v-ruta').addEventListener('scroll', (e) => { if (e.target.classList.contains('scroll')) updateOdo(); }, true);
+  $('#v-ruta').addEventListener('click', (e) => {
+    const sc = e.target.closest('[data-sc]'), leg = e.target.closest('[data-leg]'), del = e.target.closest('[data-del]'), st = e.target.closest('.inf > button');
+    const keep = () => $('#v-ruta .scroll').scrollTop;
+    if (sc) { Rt.scale = sc.dataset.sc; renderRuta(); }
+    else if (leg) { const y = keep(); Rt.sel = Rt.sel === 'leg' + leg.dataset.leg ? null : 'leg' + leg.dataset.leg; renderRuta(); $('#v-ruta .scroll').scrollTop = y; }
+    else if (del) removeCharge(del.dataset.del);
+    else if (st) { const id = Number(st.closest('.stop').dataset.id), y = keep(); Rt.sel = Rt.sel === id ? null : id; renderRuta(); $('#v-ruta .scroll').scrollTop = y; }
+  });
+
+  /* ---------- Variantes y arranque ---------- */
+  function renderAll() { renderCal(); renderMayor(); renderRuta(); }
+  document.querySelectorAll('.pick button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.pick button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    ['cal', 'mayor', 'ruta'].forEach((k) => ($('#v-' + k).hidden = k !== b.dataset.v));
+    if (b.dataset.v === 'ruta') updateOdo();
+  }));
+  function fit() {
+    if (innerWidth < 600) { phone.style.transform = ''; return; }
+    phone.style.transform = `scale(${Math.min(1, (innerHeight - 76) / 874)})`;
+  }
+  addEventListener('resize', fit);
+  fit(); renderAll();
+  window.__lab = { A, M, Rt, charges: () => charges };
+})();
+</script>
+</body>
+</html>
