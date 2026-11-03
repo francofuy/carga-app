@@ -30,10 +30,11 @@ ul { list-style: none; }
 
 /* ---------- App ---------- */
 /* Ocupa toda la pantalla: fija a los cuatro bordes (no 100dvh, que en iOS a pantalla completa deja una franja abajo). En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
-.app { position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg); --safe-top: calc(env(safe-area-inset-top, 0px) + 12px); /* 12 pt de aire bajo la barra de estado */ --safe-bottom: env(safe-area-inset-bottom, 0px); --tray-shift: 0px; }
+.app { position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg); transform: translateY(var(--lower, 0px)); /* toda la app baja lo que iOS le quita a la página (fitLower) */
+  --safe-top: max(0px, calc(env(safe-area-inset-top, 0px) - var(--lower, 0px))); /* ya empieza debajo de la isla dinámica */ --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--bottom-min, 0px)); --tray-shift: 0px; }
 @media (min-width: 600px) { body { background: #0b0b0b; } }
-/* Con bandeja abajo (inicio y asistentes) el piso toma el color de la bandeja: en el iPhone la página mide 781 de 874 pt y la franja de abajo la pinta iOS con este color, así la bandeja llega hasta el borde. */
-@media (max-width: 599px) { html.floor, html.floor body { background: var(--floor); } }
+/* Respaldo: si algo de la app quedara fuera de la página en el iPhone (la página mide 781 de 874 pt), la franja de abajo toma el color de la bandeja en el inicio y los asistentes. */
+@media (max-width: 599px) { html.floor { background: var(--floor); } }
 /* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
    Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
 .app, .home {
@@ -1871,7 +1872,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function report() {
     if (!dbg) return;
     const r = $('#app').getBoundingClientRect(), vv = window.visualViewport;
-    dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'} · app instalada ${navigator.standalone === true} · bandeja baja ${$('#app').style.getPropertyValue('--tray-shift')} · app ${Math.round(r.top)}→${Math.round(r.bottom)} · seguro ${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-top')) || 0)}/${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-bottom')) || 0)}`;
+    dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'} · app instalada ${navigator.standalone === true} · app baja ${$('#app').style.getPropertyValue('--lower')} · fichas bajan ${$('#app').style.getPropertyValue('--tray-shift')} · app ${Math.round(r.top)}→${Math.round(r.bottom)} · seguro ${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-top')) || 0)}/${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-bottom')) || 0)}`;
   }
   function toggleDebug() {
     if (dbg) { dbg.remove(); dbg = null; return; }
@@ -1879,17 +1880,24 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     report();
   }
   /**
-   * Centra las fichas en la parte visible de la bandeja. En el iPhone la bandeja termina a los 781 pt pero se ve hasta los 874 (la franja de abajo
-   * tiene su mismo color), así que el grupo fichas + pista (40 a 215 pt desde el borde de arriba de la bandeja) quedaba alto. Baja lo necesario, sin pasar del borde de la página.
+   * iOS le da a la página 402 × 781 de una pantalla de 402 × 874 (descuenta 59 arriba y 34 abajo) y la deja pegada arriba: bajo la isla dinámica
+   * queda la app y abajo sobra una franja. Se mide (pantalla − ventana) y TODA la app baja esa distancia: arriba queda vacío, abajo llega al borde.
+   * Solo en la app instalada de iOS y en vertical.
+   */
+  function fitLower() {
+    const lower = navigator.standalone === true && innerHeight > innerWidth ? Math.max(0, Math.min(120, Math.round(screen.height - innerHeight))) : 0;
+    const st = $('#app').style; st.setProperty('--lower', `${lower}px`); st.setProperty('--bottom-min', lower ? '34px' : '0px'); // la barra de inicio de abajo
+  }
+  const probe = $('#app').appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding-bottom:var(--safe-bottom)' })); // mide el margen seguro de abajo ya resuelto
+  /**
+   * Centra las fichas en la parte de la bandeja que queda encima del margen seguro de abajo (como en la vista de escritorio, que mide 262):
+   * el grupo fichas + pista ocupa de 40 a 215 pt desde el borde de arriba de la bandeja.
    */
   function fitTray() {
     const a = $('#app'), t = $('.tray'); if (!a || !t) return;
-    let shift = 0;
-    if (innerHeight > innerWidth) {
-      const top = a.getBoundingClientRect().bottom - t.offsetHeight, bottom = navigator.standalone === true ? Math.max(screen.height, innerHeight) : innerHeight;
-      shift = Math.round(Math.max(0, Math.min((bottom - top) / 2 - 127.5, t.offsetHeight - 215 - 6)));
-    }
-    a.style.setProperty('--tray-shift', `${shift}px`);
+    fitLower();
+    const usable = t.offsetHeight - (parseFloat(getComputedStyle(probe).paddingBottom) || 0);
+    a.style.setProperty('--tray-shift', `${Math.round(Math.max(0, Math.min(usable / 2 - 127.5, usable - 215 - 6)))}px`);
     report();
   }
   ['resize', 'orientationchange', 'pageshow'].forEach((e) => addEventListener(e, fitTray));
