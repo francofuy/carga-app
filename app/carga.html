@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="default"> <!-- barra opaca que toma el color de theme-color (con «black» siempre es negra) -->
 <meta name="apple-mobile-web-app-title" content="Carga">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0b1913">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -716,6 +716,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const i = Math.round(bgP);
     document.documentElement.style.setProperty('--bgk', S.bg.tint === 'color' ? S.bg.color : S.chips[CHIP_IDS[i]].color);
     appEl.style.setProperty('--tx', bgMoves() ? `${bgShift(i)}px` : '0px');
+    syncTheme(); // el color de la barra de estado sigue al fondo
   }
   /** Agranda la textura si la ventana creció (rotar, pantalla más grande); nunca la achica. */
   function bgFit() {
@@ -723,7 +724,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     if (w > BG_W || h > BG_H) { BG_W = Math.max(BG_W, w); BG_H = Math.max(BG_H, h); bgApply(); }
   }
   function bgApply() {
-    document.documentElement.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1'); syncTheme();
+    document.documentElement.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1');
     appEl.style.setProperty('--tex', bgTexUrl(S.bg.tex));
     appEl.classList.toggle('still', !S.bg.motion);
     bgFrame(bgP); bgSettle();
@@ -753,9 +754,9 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   /** Inicio y asistentes (Registrar, Programar) tienen la bandeja abajo: el piso de la página toma su color. */
   const setFloor = () => { const top = stack[stack.length - 1]; document.documentElement.classList.toggle('floor', !top || top === 'cargar' || top === 'prog'); syncTheme(); };
   setFloor();
-  /** El color de tema sigue al fondo de la página (en iOS la franja bajo la app toma ese color). */
+  /** El color de tema sigue al fondo de la app (el de la franja de arriba, no el de la bandeja): la barra de estado opaca de iOS toma ese color. */
   function syncTheme() {
-    const m = document.querySelector('meta[name="theme-color"]'), c = getComputedStyle(document.body).backgroundColor, n = c.match(/[\d.]+/g);
+    const m = document.querySelector('meta[name="theme-color"]'), c = getComputedStyle(document.querySelector('.topband')).backgroundColor, n = c.match(/[\d.]+/g);
     if (m && n && n.length >= 3) m.content = '#' + n.slice(0, 3).map((v) => Math.round(v * (c.startsWith('color(') ? 255 : 1)).toString(16).padStart(2, '0')).join('');
   }
   /** `resume`: número de paso de un borrador; entonces no se reinician los valores, se retoma donde quedó. */
