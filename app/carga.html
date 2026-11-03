@@ -16,6 +16,7 @@
 :root {
   --bg: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); --chip: #262629; --ink: #fff; --ink-2: #a3a3aa; --accent: #4fb58a; --warn: #e5a93b;
   --floor: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 24%), #0b0b0b) 82%, var(--bg)); /* la bandeja de vidrio ya compuesta sobre el fondo */
+  --col: 640px; --tray-h: 262px; /* ancho cómodo de las pantallas de contenido; alto de diseño de la bandeja */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
 }
@@ -30,11 +31,10 @@ ul { list-style: none; }
 
 /* ---------- App ---------- */
 /* Ocupa toda la pantalla: fija a los cuatro bordes (no 100dvh, que en iOS a pantalla completa deja una franja abajo). En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
-.app { position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg);
+.app { position: fixed; inset: 0; overflow: hidden; background: var(--bg);
   /* En la app instalada de iOS (fitLower): arriba queda libre la zona de la isla dinámica (--lower) y abajo termina donde iOS deja de dibujar (--lower-b); los márgenes seguros ya están contados ahí (--env-on: 0). */
   top: var(--lower, 0px); bottom: var(--lower-b, 0px);
   --safe-top: calc(env(safe-area-inset-top, 0px) * var(--env-on, 1)); --safe-bottom: calc(env(safe-area-inset-bottom, 0px) * var(--env-on, 1)); --tray-shift: 0px; }
-@media (min-width: 600px) { body { background: #0b0b0b; } }
 /* Respaldo: si algo de la app quedara fuera de la página en el iPhone (la página mide 781 de 874 pt), la franja de abajo toma el color de la bandeja en el inicio y los asistentes. */
 @media (max-width: 599px) {
   html.floor, html.floor body { background-color: var(--floor); }
@@ -54,7 +54,7 @@ ul { list-style: none; }
 .bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .bg-tint { position: absolute; inset: 0; background: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); }
 .bg-tex { position: absolute; top: 0; bottom: 0; left: -40px; right: -40px; background: var(--tex, none) center / auto no-repeat; will-change: transform; }
-.bg-rings i { position: absolute; left: 50%; bottom: calc(152px + var(--safe-bottom) - 520px - var(--tray-shift)); width: 1040px; height: 1040px; margin-left: -520px; border-radius: 50%;
+.bg-rings i { position: absolute; left: 50%; bottom: calc(var(--tray-hh, var(--tray-h)) + var(--safe-bottom) - 110px - var(--tray-shift) - 520px); /* el centro de las ondas es el de la ficha: 110 pt bajo el borde de la bandeja */ width: 1040px; height: 1040px; margin-left: -520px; border-radius: 50%;
   border: 1.5px solid var(--bgk, var(--accent)); opacity: 0; transform: scale(0.12); will-change: transform, opacity; animation: wave 9s cubic-bezier(0.23, 1, 0.32, 1) infinite; }
 .bg-rings i:nth-child(2) { animation-delay: -3s; }
 .bg-rings i:nth-child(3) { animation-delay: -6s; }
@@ -67,11 +67,13 @@ ul { list-style: none; }
 .home { position: absolute; inset: 0; display: flex; flex-direction: column; }
 .home-bar { padding: calc(var(--safe-top) + 14px) 24px 0; text-align: center; font-size: 17px; min-height: calc(var(--safe-top) + 44px); }
 .home-bar span { color: var(--ink-2); }
-.stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px calc(238px + var(--safe-bottom)); }
-.head { font-size: min(56px, 14vw); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-align: center; }
+.stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px calc(var(--tray-hh, var(--tray-h)) - 24px + var(--safe-bottom)); }
+.head { font-size: min(56px, 14vw, 8vh); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-align: center; }
 .head span { display: block; }
-.tray, .tray2 { position: relative; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-radius: 44px 44px 0 0; height: calc(262px + var(--safe-bottom)); flex: none; }
-.tray { position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; }
+.tray, .tray2 { position: relative; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-radius: 44px 44px 0 0; height: calc(var(--tray-h) + var(--safe-bottom)); flex: none; }
+.tray { position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; height: calc(var(--tray-hh, var(--tray-h)) + var(--safe-bottom)); }
+/* Pantalla baja (celular acostado): la bandeja del inicio se achica a lo que ocupan las fichas (sin pista) y deja lugar al título. */
+@media (max-height: 520px) { :root { --tray-hh: 190px; } .tray .hint { display: none; } .stage { padding-bottom: calc(var(--tray-hh) + 8px + var(--safe-bottom)); } .head { font-size: min(56px, 14vw, 6.5vh); } }
 .pointer { position: absolute; top: calc(22px + var(--tray-shift)); left: 50%; margin-left: -10px; }
 .rail { position: absolute; top: calc(40px + var(--tray-shift)); left: 0; right: 0; height: 140px; display: flex; align-items: center; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; }
 .rail::-webkit-scrollbar { display: none; }
@@ -120,17 +122,19 @@ ul { list-style: none; }
   transition: opacity 200ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s 240ms; }
 .fn.open { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease-out), transform 360ms var(--ease-drawer), visibility 0s; }
 #fn-det { z-index: 50; }
-.fn-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) 16px 0; flex: none; }
+.fn-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) 16px 0; flex: none; width: 100%; max-width: var(--col); align-self: center; }
 .fn-bar h2 { font-size: 17px; font-weight: 600; text-align: center; }
 .icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-2); font-size: 15px; font-weight: 500; transition: transform 140ms var(--ease-out); }
 .icon:active { transform: scale(0.94); }
 .icon svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.fn-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 24px; text-align: center; }
+.fn-body { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; max-width: var(--col); align-self: center; }
+.center { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 0 24px 24px; text-align: center; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.center::-webkit-scrollbar { display: none; }
+.center::before, .center::after { content: ""; flex: 1 0 0; } /* centra el contenido si sobra lugar y, si falta, lo deja arriba y se desliza: nunca se corta */
 .scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 8px 24px calc(var(--safe-bottom) + 28px); }
 .scroll::-webkit-scrollbar { display: none; }
 .hero2 { padding: 28px 0 8px; text-align: center; }
-.big { font-size: min(72px, 18vw); font-weight: 300; letter-spacing: -0.04em; line-height: 1; }
+.big { font-size: min(72px, 18vw, 10vh); font-weight: 300; letter-spacing: -0.04em; line-height: 1; }
 .big .cur { font-size: 0.46em; margin-right: 0.1em; color: var(--ink-2); letter-spacing: 0; vertical-align: top; position: relative; top: 0.12em; }
 .big small { font-size: 0.34em; margin-left: 0.12em; color: var(--ink-2); letter-spacing: 0; font-weight: 400; }
 .sub { margin-top: 14px; font-size: 17px; }
@@ -170,7 +174,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .dots i.done { background: var(--accent); }
 .dots i.on { width: 18px; background: var(--ink); }
 .q { max-width: 300px; margin-bottom: 14px; font-size: 20px; font-weight: 500; line-height: 1.25; text-wrap: balance; }
-.wextra { width: 100%; max-width: 340px; max-height: 300px; overflow-y: auto; scrollbar-width: none; }
+.wextra { width: 100%; max-width: 340px; max-height: min(300px, 36vh); overflow-y: auto; scrollbar-width: none; }
 .wextra::-webkit-scrollbar { display: none; }
 .choices { display: grid; gap: 10px; width: 100%; }
 .choices.two { grid-template-columns: 1fr 1fr; }
@@ -181,10 +185,11 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .choice[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
 .wextra .kv { text-align: left; }
 .inl-link { margin: 0; height: 32px; padding: 0 6px; color: var(--accent); }
-.nudge.p0 { left: max(8px, calc(50% - 187px)); width: 48px; height: 48px; top: 39px; font-size: 15px; color: var(--ink-2); }
-.nudge.p1 { left: max(8px, calc(50% - 129px)); width: 56px; height: 56px; top: 35px; }
-.nudge.p2 { left: calc(50% + 73px); width: 56px; height: 56px; top: 35px; }
-.nudge.p3 { left: calc(50% + 139px); width: 48px; height: 48px; top: 39px; font-size: 15px; color: var(--ink-2); }
+ /* --nf (fitTray, en la raíz) achica los cuatro botones y sus separaciones en pantallas angostas: el par de cada lado ocupa 187 pt desde el centro, así que cabe desde 390 pt de ancho; menos, se escala */
+.nudge.p0 { left: calc(50% - 187px * var(--nf)); width: calc(48px * var(--nf)); height: calc(48px * var(--nf)); top: calc(63px - 24px * var(--nf)); font-size: 15px; color: var(--ink-2); }
+.nudge.p1 { left: calc(50% - 129px * var(--nf)); width: calc(56px * var(--nf)); height: calc(56px * var(--nf)); top: calc(63px - 28px * var(--nf)); }
+.nudge.p2 { left: calc(50% + 73px * var(--nf)); width: calc(56px * var(--nf)); height: calc(56px * var(--nf)); top: calc(63px - 28px * var(--nf)); }
+.nudge.p3 { left: calc(50% + 139px * var(--nf)); width: calc(48px * var(--nf)); height: calc(48px * var(--nf)); top: calc(63px - 24px * var(--nf)); font-size: 15px; color: var(--ink-2); }
 .tray2.off .nudge, .tray2.off .ruler { opacity: 0.35; pointer-events: none; }
 .tray2.noruler .ruler, .tray2.noruler .mark { display: none; }
 .tray2.noruler.off .nudge { visibility: hidden; }
@@ -282,7 +287,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 #hist .day .dbars > span { display: flex; width: 12px; }
 #hist .day[aria-pressed="true"] { background: var(--glass-in); box-shadow: inset 0 0 0 1px #3a3a3c; }
 /* Panel del día (HUD): flota sobre el calendario, semitransparente, con el tinte del fondo */
-#dayHud { position: absolute; z-index: 6; left: 12px; right: 12px; bottom: calc(var(--safe-bottom) + 12px); max-height: min(60%, 480px); display: flex; flex-direction: column; border-radius: 28px; overflow: hidden;
+#dayHud { position: absolute; z-index: 6; left: 12px; right: 12px; max-width: calc(var(--col) - 24px); margin-inline: auto; bottom: calc(var(--safe-bottom) + 12px); max-height: min(60%, 480px); display: flex; flex-direction: column; border-radius: 28px; overflow: hidden;
   --line: rgba(255, 255, 255, 0.1);
   background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   opacity: 0; visibility: hidden; transform: translateY(28px) scale(0.98); transform-origin: 50% 100%;
@@ -675,9 +680,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   /* ---------- Fondo: tinte plano + textura + movimiento ---------- */
   const BG_TINTS = [['ninguno', 'Sin tinte'], ['ficha', 'Sigue a la ficha'], ['color', 'Un color']];
-  /* La imagen va a tamaño real (1 px = 1 px, centrada) y es más grande que cualquier pantalla: 440 px de columna máxima + 2 × 40 de recorrido, y hasta 1600 px de alto.
-     Antes se escalaba al alto de la pantalla y en pantallas bajas quedaba más angosta que el fondo: los bordes quedaban sin textura. */
-  const BG_W = 600, BG_H = 1600, BG_SHIFT = 80;
+  /* La imagen va a tamaño real (1 px = 1 px, centrada) y se dibuja del tamaño que pida la pantalla (ancho + recorrido, alto + aire): bgFit la agranda si la ventana crece. */
+  let BG_W = 600, BG_H = 1000; const BG_SHIFT = 80;
   const bgDefault = () => ({ tint: 'ficha', color: CHIP_COLORS[0][0], tex: 'liso', motion: true });
   function cleanBg(b) {
     const d = bgDefault(); if (!b || typeof b !== 'object') return d;
@@ -692,7 +696,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function bgTexUrl(id) {
     if (id === 'liso') return 'none';
     const T = CHIP_TEXTURES.find((t) => t[0] === id);
-    return bgUrls[id] ??= `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${BG_W}" height="${BG_H}" viewBox="0 0 ${BG_W} ${BG_H}"><path d="${T[2](BG_W, BG_H, false)}" fill="none" stroke="#fff" stroke-opacity="0.06" stroke-width="${T[3]}" stroke-linecap="${T[4]}"/></svg>`)}")`;
+    return bgUrls[`${id}|${BG_W}|${BG_H}`] ??= `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${BG_W}" height="${BG_H}" viewBox="0 0 ${BG_W} ${BG_H}"><path d="${T[2](BG_W, BG_H, false)}" fill="none" stroke="#fff" stroke-opacity="0.06" stroke-width="${T[3]}" stroke-linecap="${T[4]}"/></svg>`)}")`;
   }
   let bgP = 0; // posición del carril, en fichas (0 = primera)
   const bgMoves = () => S.bg.motion && !reduceMotion.matches;
@@ -711,8 +715,13 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     document.documentElement.style.setProperty('--bgk', S.bg.tint === 'color' ? S.bg.color : S.chips[CHIP_IDS[i]].color);
     appEl.style.setProperty('--tx', bgMoves() ? `${bgShift(i)}px` : '0px');
   }
+  /** Agranda la textura si la ventana creció (rotar, pantalla más grande); nunca la achica. */
+  function bgFit() {
+    const w = Math.max(600, Math.ceil((innerWidth + BG_SHIFT + 40) / 100) * 100), h = Math.max(1000, Math.ceil((Math.max(innerHeight, screen.height) + 40) / 100) * 100);
+    if (w > BG_W || h > BG_H) { BG_W = Math.max(BG_W, w); BG_H = Math.max(BG_H, h); bgApply(); }
+  }
   function bgApply() {
-    document.documentElement.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1');
+    document.documentElement.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1'); syncTheme();
     appEl.style.setProperty('--tex', bgTexUrl(S.bg.tex));
     appEl.classList.toggle('still', !S.bg.motion);
     bgFrame(bgP); bgSettle();
@@ -740,8 +749,13 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   /* ---------- Abrir y cerrar pantallas (pila) ---------- */
   const stack = [];
   /** Inicio y asistentes (Registrar, Programar) tienen la bandeja abajo: el piso de la página toma su color. */
-  const setFloor = () => { const top = stack[stack.length - 1]; document.documentElement.classList.toggle('floor', !top || top === 'cargar' || top === 'prog'); };
+  const setFloor = () => { const top = stack[stack.length - 1]; document.documentElement.classList.toggle('floor', !top || top === 'cargar' || top === 'prog'); syncTheme(); };
   setFloor();
+  /** El color de tema sigue al fondo de la página (en iOS la franja bajo la app toma ese color). */
+  function syncTheme() {
+    const m = document.querySelector('meta[name="theme-color"]'), c = getComputedStyle(document.body).backgroundColor, n = c.match(/[\d.]+/g);
+    if (m && n && n.length >= 3) m.content = '#' + n.slice(0, 3).map((v) => Math.round(v * (c.startsWith('color(') ? 255 : 1)).toString(16).padStart(2, '0')).join('');
+  }
   /** `resume`: número de paso de un borrador; entonces no se reinician los valores, se retoma donde quedó. */
   function openFn(id, resume) {
     if (resume == null) { if (id === 'cargar') initCargar(); if (id === 'prog') initProg(); }
@@ -1877,7 +1891,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function report() {
     if (!dbg) return;
     const r = $('#app').getBoundingClientRect(), vv = window.visualViewport;
-    dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'} · app instalada ${navigator.standalone === true} · instalada ${navigator.standalone === true}/${matchMedia('(display-mode: standalone)').matches} · arriba ${document.documentElement.style.getPropertyValue('--lower')} · abajo ${document.documentElement.style.getPropertyValue('--lower-b')} · fichas bajan ${$('#app').style.getPropertyValue('--tray-shift')} · app ${Math.round(r.top)}→${Math.round(r.bottom)} · seguro ${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-top')) || 0)}/${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-bottom')) || 0)}`;
+    dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'} · app instalada ${navigator.standalone === true} · instalada ${navigator.standalone === true}/${matchMedia('(display-mode: standalone)').matches} · recorte medido ${clipped} · arriba ${document.documentElement.style.getPropertyValue('--lower')} · abajo ${document.documentElement.style.getPropertyValue('--lower-b')} · fichas bajan ${$('#app').style.getPropertyValue('--tray-shift')} · app ${Math.round(r.top)}→${Math.round(r.bottom)} · seguro ${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-top')) || 0)}/${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-bottom')) || 0)}`;
   }
   function toggleDebug() {
     if (dbg) { dbg.remove(); dbg = null; return; }
@@ -1885,17 +1899,20 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     report();
   }
   /**
-   * App instalada de iOS: la bandeja mide 296 y llega a los 874 pt de la pantalla, pero lo que se ve termina a los ~781 (la app y su fondo dejan de dibujarse
-   * unos 93 pt antes del borde = 59 de la isla dinámica + 34 de la barra de inicio) y arriba todo queda debajo de la isla, donde iOS difumina.
-   * Por eso la app ocupa solo la zona que sí se dibuja: empieza 93 pt más abajo y termina donde iOS corta. La franja de abajo se pinta con el color de la bandeja (html.floor).
-   * Los márgenes seguros de la zona se miden con env() en una sonda; con la ventana ya descontada (innerHeight < pantalla) no se descuenta dos veces.
+   * Zona que sí se dibuja. En la app instalada de iOS lo que se ve termina antes del borde de la pantalla y arriba el contenido queda bajo la isla dinámica,
+   * donde iOS lo difumina: la app ocupa solo esa zona (arriba --lower, abajo --lower-b). No hay números de un modelo: primero se MIDE cuánto del borde de abajo queda
+   * recortado (una sonda fija + IntersectionObserver) y, si el sistema no lo informa, se usan los márgenes seguros env() de arriba y de abajo. Con la ventana ya
+   * descontada (innerHeight < pantalla) no se descuenta dos veces. Fuera de la app instalada no se toca nada.
    */
   const envProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)' }));
+  const clipProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;left:0;bottom:0;width:4px;height:240px;opacity:0;pointer-events:none' }));
+  let clipped = 0; // px del borde de abajo que el sistema no dibuja, medidos
+  if ('IntersectionObserver' in window) new IntersectionObserver((es) => { clipped = Math.max(0, Math.round(240 - es[es.length - 1].intersectionRect.height)); fitTray(); }, { threshold: Array.from({ length: 49 }, (_, i) => i / 48) }).observe(clipProbe);
   function fitLower() {
     const cs = getComputedStyle(envProbe), top = parseFloat(cs.paddingTop) || 0, bottom = parseFloat(cs.paddingBottom) || 0;
     const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; // iOS 26 ya no siempre marca navigator.standalone
-    const on = installed && innerHeight > innerWidth && top > 0 && bottom > 0;
-    const lower = on ? Math.round(top + bottom) : 0, lowerB = on ? Math.max(0, lower - Math.max(0, screen.height - innerHeight)) : 0;
+    const on = installed && innerHeight > innerWidth && (clipped > 0 || (top > 0 && bottom > 0));
+    const lower = on ? clipped || Math.round(top + bottom) : 0, lowerB = on ? clipped || Math.max(0, lower - Math.max(0, screen.height - innerHeight)) : 0;
     const r = document.documentElement.style;
     r.setProperty('--lower', `${lower}px`); r.setProperty('--lower-b', `${lowerB}px`); r.setProperty('--env-on', on ? '0' : '1');
   }
@@ -1906,7 +1923,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
    */
   function fitTray() {
     const a = $('#app'), t = $('.tray'); if (!a || !t) return;
-    fitLower();
+    bgFit(); fitLower();
+    document.documentElement.style.setProperty('--nf', Math.min(1, (innerWidth - 16) / 374).toFixed(3));
     const strip = parseFloat(document.documentElement.style.getPropertyValue('--lower-b')) || 0; // franja de abajo: sigue la bandeja, sin app encima
     const room = t.offsetHeight - (parseFloat(getComputedStyle(probe).paddingBottom) || 0); // hasta donde puede llegar el contenido
     a.style.setProperty('--tray-shift', `${Math.round(Math.max(0, Math.min((room + strip) / 2 - 127.5, room - 215 - 6)))}px`);
