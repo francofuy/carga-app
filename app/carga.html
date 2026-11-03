@@ -15,6 +15,7 @@
 <style>
 :root {
   --bg: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); --chip: #262629; --ink: #fff; --ink-2: #a3a3aa; --accent: #4fb58a; --warn: #e5a93b;
+  --floor: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 24%), #0b0b0b) 82%, var(--bg)); /* la bandeja de vidrio ya compuesta sobre el fondo */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
 }
@@ -29,8 +30,10 @@ ul { list-style: none; }
 
 /* ---------- App ---------- */
 /* Ocupa toda la pantalla: fija a los cuatro bordes (no 100dvh, que en iOS a pantalla completa deja una franja abajo). En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
-.app { position: fixed; inset: 0; bottom: calc(var(--drop, 0px) * -1); margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+.app { position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 @media (min-width: 600px) { body { background: #0b0b0b; } }
+/* Con bandeja abajo (inicio y asistentes) el piso toma el color de la bandeja: en el iPhone la página mide 781 de 874 pt y la franja de abajo la pinta iOS con este color, así la bandeja llega hasta el borde. */
+@media (max-width: 599px) { html.floor, html.floor body { background: var(--floor); } }
 /* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
    Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
 .app, .home {
@@ -729,6 +732,9 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   /* ---------- Abrir y cerrar pantallas (pila) ---------- */
   const stack = [];
+  /** Inicio y asistentes (Registrar, Programar) tienen la bandeja abajo: el piso de la página toma su color. */
+  const setFloor = () => { const top = stack[stack.length - 1]; document.documentElement.classList.toggle('floor', !top || top === 'cargar' || top === 'prog'); };
+  setFloor();
   /** `resume`: número de paso de un borrador; entonces no se reinician los valores, se retoma donde quedó. */
   function openFn(id, resume) {
     if (resume == null) { if (id === 'cargar') initCargar(); if (id === 'prog') initProg(); }
@@ -738,7 +744,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const el = $('#fn-' + id);
     el.inert = false; el.classList.add('open');
     (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = true;
-    stack.push(id); appEl.classList.add('fn-open');
+    stack.push(id); appEl.classList.add('fn-open'); setFloor();
     if (id === 'fondo') renderFondo();
     if (id === 'prog') renderProg();
     if (id === 'activa') { confirmShown = false; renderActiva(); }
@@ -750,7 +756,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const id = stack[stack.length - 1]; if (!id) return;
     if (DRAFTS[id]) DRAFTS[id].wiz().flush(); // cerrar sin querer conserva lo que había cargado
     if (id === 'historial') closeHud();
-    stack.pop(); appEl.classList.toggle('fn-open', stack.length > 0);
+    stack.pop(); appEl.classList.toggle('fn-open', stack.length > 0); setFloor();
     const el = $('#fn-' + id);
     el.classList.remove('open'); el.inert = true;
     (stack[stack.length - 1] ? $('#fn-' + stack[stack.length - 1]) : $('#home')).inert = false;
@@ -1857,23 +1863,27 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 
   /* ---------- Arranque ---------- */
   /**
-   * iOS a pantalla completa: si la ventana de la página es más baja que la pantalla, abajo queda una franja donde no hay app.
-   * Se mide (pantalla − ventana) y la app se estira hacia abajo esa distancia (--drop): la bandeja baja y el fondo la cubre.
-   * Solo en la app instalada de iOS (`navigator.standalone`) y en vertical; con #debug en la dirección se ven los números.
+   * Diagnóstico de pantalla: con #debug en la dirección, o manteniendo apretada la línea de arriba del inicio, se ven las medidas reales
+   * (en el iPhone 17 Pro: ventana 402 × 781 de pantalla 402 × 874, porque iOS descuenta 59 arriba y 34 abajo).
    */
-  function fitScreen() {
-    let drop = 0;
-    if (navigator.standalone === true && innerHeight > innerWidth) {
-      const vv = window.visualViewport, h = Math.max(innerHeight, vv ? vv.height + vv.offsetTop : 0);
-      drop = Math.max(0, Math.min(120, Math.round(screen.height - h)));
-    }
-    document.documentElement.style.setProperty('--drop', `${drop}px`);
-    if (dbg) dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · app instalada ${navigator.standalone === true} · estiro ${drop} px · app ${Math.round($('#app').getBoundingClientRect().height)}`;
+  let dbg = null;
+  function report() {
+    if (!dbg) return;
+    const r = $('#app').getBoundingClientRect(), vv = window.visualViewport;
+    dbg.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'} · app instalada ${navigator.standalone === true} · app ${Math.round(r.top)}→${Math.round(r.bottom)} · seguro ${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-top')) || 0)}/${Math.round(parseFloat(getComputedStyle($('#app')).getPropertyValue('--safe-bottom')) || 0)}`;
   }
-  const dbg = location.hash === '#debug' ? document.body.appendChild(Object.assign(document.createElement('p'), { style: 'position:fixed;z-index:999;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 4px);font:11px/1.3 monospace;color:#ff0;background:#000a;padding:4px;pointer-events:none' })) : null;
-  ['resize', 'orientationchange', 'pageshow'].forEach((t) => addEventListener(t, fitScreen));
-  if (window.visualViewport) visualViewport.addEventListener('resize', fitScreen);
-  fitScreen();
+  function toggleDebug() {
+    if (dbg) { dbg.remove(); dbg = null; return; }
+    dbg = document.body.appendChild(Object.assign(document.createElement('p'), { style: 'position:fixed;z-index:999;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 4px);font:11px/1.3 monospace;color:#ff0;background:#000a;padding:4px;pointer-events:none' }));
+    report();
+  }
+  if (location.hash === '#debug') toggleDebug();
+  ['resize', 'orientationchange', 'pageshow'].forEach((t) => addEventListener(t, report));
+  (function longPressTopBar() {
+    let t = 0; const bar = $('#topBar');
+    bar.addEventListener('pointerdown', () => { t = setTimeout(toggleDebug, 900); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((e) => bar.addEventListener(e, () => clearTimeout(t)));
+  })();
   /* Sin zoom por gestos (iOS ignora user-scalable=no, por eso también se frenan aparte): pellizco, doble toque y Ctrl + rueda. */
   ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
