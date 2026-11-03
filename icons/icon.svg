@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Carga</title>
+  <rect width="1024" height="1024" fill="#0b1612"/>
+  <g fill="none" stroke="#4fb58a" stroke-width="6">
+    <circle cx="512" cy="512" r="372" opacity="0.32"/>
+    <circle cx="512" cy="512" r="438" opacity="0.18"/>
+    <circle cx="512" cy="512" r="504" opacity="0.09"/>
+  </g>
+  <g transform="translate(212 212) scale(4.7619)">
+    <circle cx="63" cy="63" r="63" fill="#4fb58a"/>
+    <circle cx="63" cy="63" r="55" fill="none" stroke="#fff" stroke-width="12" stroke-dasharray="21 22.2" stroke-dashoffset="10.5" transform="rotate(-90 63 63)"/>
+    <circle cx="63" cy="63" r="62" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="2"/>
+    <circle cx="63" cy="63" r="42" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1.5"/>
+    <g transform="translate(36 36) scale(2.25)"><path d="M13.5 3L5.5 14h6l-1 7 8-11h-6l1-7z" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></g>
+  </g>
+</svg>

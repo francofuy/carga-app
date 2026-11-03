@@ -8,10 +8,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Carga">
 <meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <title>Carga</title>
 <style>
 :root {
-  --bg: #000; --chip: #262629; --ink: #fff; --ink-2: #a3a3aa; --accent: #4fb58a; --warn: #e5a93b;
+  --bg: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); --chip: #262629; --ink: #fff; --ink-2: #a3a3aa; --accent: #4fb58a; --warn: #e5a93b;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
 }
@@ -25,8 +28,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 ul { list-style: none; }
 
 /* ---------- App ---------- */
-/* Ocupa toda la pantalla. En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
-.app { position: relative; width: 100%; max-width: 440px; height: 100dvh; overflow: hidden; --bg: color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 14%), #000); background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+/* Ocupa toda la pantalla: fija a los cuatro bordes (no 100dvh, que en iOS a pantalla completa deja una franja abajo). En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
+.app { position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 440px; overflow: hidden; background: var(--bg); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 @media (min-width: 600px) { body { background: #0b0b0b; } }
 /* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
    Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
@@ -66,7 +69,7 @@ ul { list-style: none; }
 .rail::before, .rail::after { content: ""; flex: 0 0 calc(50% - 50px); }
 .rail.mouse-drag { scroll-snap-type: none; cursor: grabbing; }
 /* el círculo (126 px) es más ancho que su espacio (100 px): se centra desde su punto medio, no con la alineación de la grilla, que lo pegaba al borde izquierdo */
-.slot { position: relative; flex: none; width: 100px; height: 140px; scroll-snap-align: center; scroll-snap-stop: always; }
+.slot { position: relative; flex: none; width: 100px; height: 140px; scroll-snap-align: center; } /* sin scroll-snap-stop: con «always» el carril frenaba en seco en cada ficha apenas se soltaba el dedo */
 .slot .c { --k: 0; position: absolute; left: 50%; top: 50%; margin: -63px 0 0 -63px; width: 126px; height: 126px; border-radius: 50%; display: block; will-change: transform;
   color: color-mix(in srgb, #fff calc(var(--k) * 100%), #a0a0a5); }
 /* Ficha de poker: cuerpo, marcas del borde y anillo van del gris al color elegido a medida que la ficha llega al centro (--k) */
@@ -134,10 +137,18 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .leg { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
 
 
-.seg { display: flex; padding: 3px; border-radius: 999px; background: var(--glass-in); justify-self: center; }
-.seg button { position: relative; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 15px; color: var(--ink-2); transition: background-color 160ms ease, color 160ms ease; white-space: nowrap; }
+.seg { position: relative; display: flex; padding: 3px; border-radius: 999px; background: var(--glass-in); justify-self: center; touch-action: pan-y; }
+.seg button { position: relative; z-index: 1; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 15px; color: var(--ink-2); transition: background-color 160ms ease, color 160ms ease; white-space: nowrap; }
 .seg button::before { content: ""; position: absolute; inset: -4px 0; }
-.seg button[aria-pressed="true"] { background: var(--glass-hi); color: var(--ink); }
+.seg:not(.has-thumb) button[aria-pressed="true"] { background: var(--glass-hi); }
+.seg button[aria-pressed="true"], .seg button.hot { color: var(--ink); }
+/* Globo de cristal: marca la opción elegida, se agranda al apretarlo y se puede arrastrar hasta otra opción (lo mueve JS: segSync) */
+.seg .thumb { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 999px; pointer-events: none;
+  background: rgba(255, 255, 255, 0.13); -webkit-backdrop-filter: blur(6px) saturate(1.6); backdrop-filter: blur(6px) saturate(1.6);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  translate: var(--x, 0px) 0; transition: translate 380ms var(--ease-drawer), width 260ms var(--ease-drawer), scale 240ms var(--ease-out), background-color 200ms var(--ease-out), box-shadow 240ms var(--ease-out); }
+.seg .thumb.press { scale: 1.1 1.22; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 20px rgba(0, 0, 0, 0.35); }
+.seg .thumb.drag { transition: width 200ms var(--ease-out), scale 240ms var(--ease-out), background-color 200ms var(--ease-out), box-shadow 240ms var(--ease-out); }
 .seg.wide { display: flex; margin-top: 18px; }
 .seg.wide button { flex: 1; padding: 0 4px; }
 
@@ -538,12 +549,14 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       if (e.key === 'ArrowLeft' && at() > 0) go(at() - 1, true, true);
     };
     // arrastre con mouse (solo vista previa de escritorio)
-    const onDown = (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: el.scrollLeft, moved: false }; };
+    const onDown = (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: el.scrollLeft, moved: false, lx: e.clientX, lt: performance.now(), v: 0 }; };
     const onMove = (e) => {
       if (!md) return;
       const dx = e.clientX - md.x;
       if (!md.moved && Math.abs(dx) > 5) { md.moved = true; el.classList.add('mouse-drag'); }
       if (md.moved) el.scrollLeft = md.l - dx;
+      const now = performance.now(), dt = now - md.lt;
+      if (dt > 0) { md.v = 0.7 * md.v + 0.3 * ((md.lx - e.clientX) / dt); md.lx = e.clientX; md.lt = now; } // velocidad en px/ms
     };
     const onUp = () => {
       if (!md) return;
@@ -551,7 +564,8 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       if (!m.moved) return;
       el.classList.remove('mouse-drag');
       dragged = true; setTimeout(() => (dragged = false), 0);
-      el.scrollTo({ left: Math.round(el.scrollLeft / SLOT) * SLOT, behavior: 'smooth' });
+      const v = performance.now() - m.lt > 80 ? 0 : m.v; // si se frenó antes de soltar, no hay empuje
+      el.scrollTo({ left: Math.max(0, Math.min(count - 1, Math.round((el.scrollLeft + v * 260) / SLOT))) * SLOT, behavior: 'smooth' });
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('click', onClick);
@@ -683,11 +697,11 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   /** Cuando el carril se asienta: las pantallas que se abren encima heredan el mismo tinte y la misma posición de la textura. */
   function bgSettle() {
     const i = Math.round(bgP);
-    appEl.style.setProperty('--bgk', S.bg.tint === 'color' ? S.bg.color : S.chips[CHIP_IDS[i]].color);
+    document.documentElement.style.setProperty('--bgk', S.bg.tint === 'color' ? S.bg.color : S.chips[CHIP_IDS[i]].color);
     appEl.style.setProperty('--tx', bgMoves() ? `${bgShift(i)}px` : '0px');
   }
   function bgApply() {
-    appEl.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1');
+    document.documentElement.style.setProperty('--bgt', S.bg.tint === 'ninguno' ? '0' : '1');
     appEl.style.setProperty('--tex', bgTexUrl(S.bg.tex));
     appEl.classList.toggle('still', !S.bg.motion);
     bgFrame(bgP); bgSettle();
@@ -849,25 +863,49 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       // `base`: la regla puede arrancar en un valor distinto de cero (p. ej. el último odómetro)
       const v = (cfg.base || 0) + Math.min(cfg.max, Math.round(ruler.scrollLeft / cfg.ppv / cfg.step) * cfg.step);
       cfg.set(cfg.step < 1 ? r1(v) : v); sync(false); cfg.onChange();
-      clearTimeout(snapT);
-      snapT = setTimeout(() => { prog = true; ruler.scrollTo({ left: (cur() - (cfg.base || 0)) * cfg.ppv, behavior: 'smooth' }); setTimeout(() => (prog = false), 350); }, 160);
+      clearTimeout(snapT); snapT = setTimeout(snap, 200);
     }, { passive: true });
+    // acomodar la regla en el valor exacto solo cuando ya no se toca ni se desliza: con el dedo apoyado y quieto (o a mitad de un empujón) no debe cortarle el movimiento
+    let held = false;
+    const snap = () => { if (held || !cfg || cfg.noRuler) return; prog = true; ruler.scrollTo({ left: (cur() - (cfg.base || 0)) * cfg.ppv, behavior: 'smooth' }); setTimeout(() => (prog = false), 350); };
+    ruler.addEventListener('touchstart', () => { held = true; }, { passive: true });
+    const released = () => { held = false; clearTimeout(snapT); snapT = setTimeout(snap, 200); };
+    ruler.addEventListener('touchend', released, { passive: true }); ruler.addEventListener('touchcancel', released, { passive: true });
     ruler.addEventListener('keydown', (e) => {
       const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
       if (d != null && cfg) { e.preventDefault(); apply(cur() + d * cfg.step); }
     });
     nbs.forEach((b, i) => holdRepeat(b, (mult) => { const d = cfg.nudges[i][0]; apply(cur() + d * (cfg.kind === 'num' ? mult : 1)); }));
     goBtn.addEventListener('click', () => onGo());
-    (function mouseDrag() { // solo vista previa de escritorio
-      let md = null;
-      ruler.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') md = { x: e.clientX, l: ruler.scrollLeft, moved: false }; });
+    (function mouseDrag() { // solo vista previa de escritorio: arrastrar y soltar con inercia, como el dedo
+      let md = null, raf = 0;
+      const stop = () => cancelAnimationFrame(raf);
+      /** Después de soltar, la regla sigue y frena sola (constante de tiempo ~330 ms); al detenerse, el scroll normal la acomoda en el valor. */
+      function glide(v) {
+        let last = performance.now();
+        const tick = (now) => {
+          const dt = Math.min(48, now - last); last = now;
+          const before = ruler.scrollLeft;
+          ruler.scrollLeft = before + v * dt;
+          v *= Math.exp(-dt / 330);
+          if (Math.abs(v) > 0.03 && ruler.scrollLeft !== before) raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      }
+      ruler.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') { stop(); md = { x: e.clientX, l: ruler.scrollLeft, moved: false, lx: e.clientX, lt: performance.now(), v: 0 }; } });
       addEventListener('pointermove', (e) => {
         if (!md) return;
         const dx = e.clientX - md.x;
         if (!md.moved && Math.abs(dx) > 3) { md.moved = true; ruler.classList.add('mouse-drag'); }
-        if (md.moved) ruler.scrollLeft = md.l - dx;
+        if (!md.moved) return;
+        ruler.scrollLeft = md.l - dx;
+        const now = performance.now(), dt = now - md.lt;
+        if (dt > 0) { md.v = 0.7 * md.v + 0.3 * ((md.lx - e.clientX) / dt); md.lx = e.clientX; md.lt = now; } // px/ms
       });
-      addEventListener('pointerup', () => { md = null; ruler.classList.remove('mouse-drag'); });
+      addEventListener('pointerup', () => {
+        const m = md; md = null; ruler.classList.remove('mouse-drag');
+        if (m && m.moved && performance.now() - m.lt < 80 && Math.abs(m.v) > 0.05) glide(m.v); // si se frenó antes de soltar, no hay empuje
+      });
     })();
     return {
       config, sync,
@@ -1743,6 +1781,67 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     S.bg = cleanBg(k === 'reset' ? null : { ...S.bg, [k]: k === 'motion' ? v === '1' : v });
     persist(); bgApply(); renderFondo();
   });
+
+  /* ---------- Selectores con globo de cristal (.seg) ---------- */
+  const segLast = new Map(); // dónde estaba el globo de cada selector (por pantalla y orden): al redibujarlo sale de ahí y se desliza
+  const segKey = (seg) => { const host = seg.closest('.fn'); return `${host ? host.id : ''}|${[...(host || document).querySelectorAll('.seg')].indexOf(seg)}`; };
+  /** Pone el globo sobre la opción elegida (lo crea si falta). */
+  function segSync(seg) {
+    const sel = seg.querySelector('button[aria-pressed="true"]'); if (!sel || !sel.offsetWidth) return;
+    let t = seg.querySelector(':scope > .thumb');
+    if (!t) {
+      t = document.createElement('i'); t.className = 'thumb'; t.setAttribute('aria-hidden', 'true'); seg.prepend(t); seg.classList.add('has-thumb');
+      const prev = segLast.get(segKey(seg));
+      t.style.transition = 'none'; t.style.width = `${prev ? prev.w : sel.offsetWidth}px`; t.style.setProperty('--x', `${prev ? prev.x : sel.offsetLeft}px`);
+      void t.offsetWidth; t.style.transition = '';
+    }
+    t.style.width = `${sel.offsetWidth}px`; t.style.setProperty('--x', `${sel.offsetLeft}px`);
+    segLast.set(segKey(seg), { x: sel.offsetLeft, w: sel.offsetWidth });
+  }
+  const segAll = () => document.querySelectorAll('.seg').forEach(segSync);
+  new MutationObserver((list) => {
+    const segs = new Set();
+    for (const m of list) {
+      if (m.type === 'attributes') { const g = m.target.closest('.seg'); if (g) segs.add(g); continue; }
+      m.addedNodes.forEach((n) => { if (n.nodeType === 1) { if (n.matches('.seg')) segs.add(n); n.querySelectorAll('.seg').forEach((g) => segs.add(g)); } });
+    }
+    segs.forEach(segSync);
+  }).observe(appEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-pressed'] });
+  addEventListener('resize', segAll);
+  if (document.fonts) document.fonts.ready.then(segAll);
+  (function segDrag() { // mantener apretada la opción elegida y arrastrar: el globo la sigue y al soltar elige la que quedó debajo
+    let d = null, swallow = false;
+    document.addEventListener('pointerdown', (e) => {
+      const seg = e.target.closest('.seg.has-thumb'), sel = seg && seg.querySelector('button[aria-pressed="true"]');
+      if (!seg || !sel || e.button > 0 || e.target.closest('button') !== sel) return;
+      const t = seg.querySelector(':scope > .thumb'), bs = [...seg.querySelectorAll('button')];
+      d = { seg, t, sel, bs, id: e.pointerId, x0: e.clientX, left: sel.offsetLeft, moved: false, hot: sel };
+      t.classList.add('press');
+      try { seg.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    document.addEventListener('pointermove', (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const dx = e.clientX - d.x0;
+      if (!d.moved && Math.abs(dx) > 3) { d.moved = true; d.t.classList.add('drag'); }
+      if (!d.moved) return;
+      const first = d.bs[0], last = d.bs[d.bs.length - 1], w = d.t.offsetWidth, lo = first.offsetLeft, hi = last.offsetLeft + last.offsetWidth - w;
+      const x = Math.max(lo, Math.min(hi, d.left + dx)), mid = x + w / 2;
+      const hot = d.bs.find((b) => mid >= b.offsetLeft && mid < b.offsetLeft + b.offsetWidth) || d.hot;
+      if (hot !== d.hot) { d.hot.classList.remove('hot'); hot.classList.add('hot'); d.hot = hot; d.t.style.width = `${hot.offsetWidth}px`; }
+      d.t.style.setProperty('--x', `${x}px`);
+      segLast.set(segKey(d.seg), { x, w: hot.offsetWidth });
+    });
+    const end = (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const { seg, t, sel, hot, moved } = d; d = null;
+      t.classList.remove('press', 'drag'); hot.classList.remove('hot');
+      if (!moved) return;
+      if (e.type === 'pointerup' && hot !== sel) hot.click(); else segSync(seg); // elegir la opción, o volver a la que estaba
+      swallow = true; setTimeout(() => (swallow = false), 0); // el clic nativo que sigue a soltar no debe elegir nada
+    };
+    document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+    document.addEventListener('click', (e) => { if (swallow) { e.stopPropagation(); e.preventDefault(); } }, true);
+  })();
 
   /* ---------- Render general ---------- */
   function renderTop() {
