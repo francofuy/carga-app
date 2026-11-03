@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Carga">
-<meta name="theme-color" content="#0b1913">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -40,6 +40,8 @@ ul { list-style: none; }
 @media (max-width: 599px) {
   html.floor, html.floor body { background-color: var(--floor); }
 }
+/* iOS pinta la zona de la barra de estado (que la página no alcanza) con el color de fondo de la raíz y lo vuelve a leer mientras se usa la app: con el color de la bandeja o del tinte cambiaba solo (apareció una franja azul). Con la página bajo la barra queda fijo en negro, que es donde empieza el degradé. */
+html.below-bar, html.below-bar body { background: #000; }
 /* iOS 26.1+: la barra de estado negra reclama su zona y la página no llega ahí (no se puede pintar). Un degradé corto de negro a transparente, detrás del texto, empalma la barra con el fondo. */
 html.below-bar .bg::after, html.below-bar .fn::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 56px; pointer-events: none; background: linear-gradient(#000, rgba(0, 0, 0, 0)); } /* taste-skill-ignore: empalme con la barra de estado, no decoración */
 html.below-bar .fn::before { z-index: -1; }
@@ -760,6 +762,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   /** El color de tema sigue al fondo de la app (el de la franja de arriba, no el de la bandeja): la barra de estado opaca de iOS toma ese color. */
   function syncTheme() {
     const m = document.querySelector('meta[name="theme-color"]'), c = getComputedStyle(document.querySelector('.topband')).backgroundColor, n = c.match(/[\d.]+/g);
+    if (document.documentElement.classList.contains('below-bar')) { if (m) m.content = '#000000'; return; } // fijo: con la página bajo la barra, el color de la barra no debe cambiar
     if (m && n && n.length >= 3) m.content = '#' + n.slice(0, 3).map((v) => Math.round(v * (c.startsWith('color(') ? 255 : 1)).toString(16).padStart(2, '0')).join('');
   }
   /** `resume`: número de paso de un borrador; entonces no se reinician los valores, se retoma donde quedó. */
@@ -1932,6 +1935,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const on = zoneOn = installed && innerHeight > innerWidth && top > 0, gap = on ? Math.max(0, screen.height - innerHeight) : 0, r = document.documentElement.style;
     r.setProperty('--lower', `${on ? Math.round(top) : 0}px`);
     r.setProperty('--env-top-on', on ? '0' : '1'); r.setProperty('--env-bottom-on', gap > 0 ? '0' : '1');
+    syncTheme();
   }
   const probe = $('#app').appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding-bottom:var(--safe-bottom)' })); // mide el margen seguro de abajo ya resuelto
   /**
