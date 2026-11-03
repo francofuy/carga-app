@@ -7,7 +7,7 @@
 web
 
 ## Stack
-Greenfield, single static HTML file with inline CSS/JS (current prototype: `app/index.html`). Stack choice not confirmed by the user; delegated by default.
+Greenfield, single static HTML file with inline CSS/JS (first prototype, now `app/prototipo-inicial.html`; the real app is `app/carga.html`). Stack choice not confirmed by the user; delegated by default.
 
 ## Users
 Franco, owner of one electric car, logging his own charging sessions on his iPhone 17 Pro. Opens the app for a few seconds after plugging in or unplugging, or to check how much charging has cost. (Inferred from the brief: single user, personal use. Not confirmed.)

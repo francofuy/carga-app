@@ -9,8 +9,8 @@ const port = Number(process.env.PORT) || 5173;
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp' };
 
 createServer(async (req, res) => {
-  const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname));
-  const file = join(root, path.endsWith('/') ? path + 'index.html' : path);
+  const url = decodeURIComponent(new URL(req.url, 'http://x').pathname); // la barra final se mira antes de normalizar: en Windows normalize('/') da '\'
+  const file = join(root, normalize(url.endsWith('/') ? url + 'index.html' : url));
   if (!file.startsWith(root)) { res.writeHead(403).end(); return; }
   try {
     const body = await readFile(file);

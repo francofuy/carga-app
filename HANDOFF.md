@@ -26,7 +26,8 @@ claude --resume                                                  # elegir la ses
 | `app/logic.test.js` | 19 tests: `node app/logic.test.js`. |
 | `app/LOGICA.md` | Qué se portó de `carga-ev`, qué se mejoró, cobertura, respaldos, fichas. |
 | `app/historial-lab.html` | Exploración de 3 vistas de historial (queda como referencia; se eligió el Calendario). |
-| `app/index.html`, `app/fichas.html` | Prototipos anteriores, solo referencia. |
+| `index.html` (raíz) | Entrada para GitHub Pages: redirige a `app/carga.html`. Pages sirve la raíz del repo, por eso hace falta. |
+| `app/prototipo-inicial.html`, `app/fichas.html` | Prototipos anteriores, solo referencia. |
 | `CLAUDE.md`, `DESIGN.md`, `PRODUCT.md` | Reglas del proyecto, dirección visual, producto. Leer `DESIGN.md` antes de tocar la UI. |
 | `.claude/skills/` | Las skills instaladas: taste-skill, emil-design-eng, impeccable, animate, apple-design, mobile-native, animation-performance, animation-vocabulary. |
 | `.claude/launch.json`, `scripts/serve.mjs` | Servidor local. |

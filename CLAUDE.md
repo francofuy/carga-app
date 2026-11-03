@@ -1,7 +1,7 @@
 # Carga — app de registro de cargas de auto eléctrico
 
 Web app para iPhone 17 Pro a pantalla completa. Prototipo actual: `app/carga.html` (un solo archivo, sin build) + `app/logic.js` (lógica pura, con tests: `node app/logic.test.js`).
-Pantallas anteriores (`app/index.html`, `app/fichas.html`) quedan solo como referencia.
+Pantallas anteriores (`app/prototipo-inicial.html`, `app/fichas.html`) quedan solo como referencia.
 Historial: solo el **Calendario** (elegido de una exploración de tres en `app/historial-lab.html`, que queda como referencia con el Libro mayor y la Ruta por odómetro).
 
 ## Al diseñar o cambiar UI
