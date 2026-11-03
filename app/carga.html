@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Carga">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
@@ -32,11 +32,10 @@ ul { list-style: none; }
 /* ---------- App ---------- */
 /* Ocupa toda la pantalla: fija a los cuatro bordes (no 100dvh, que en iOS a pantalla completa deja una franja abajo). En una pantalla ancha (escritorio, tablet) queda una columna centrada del ancho de un iPhone grande, sin marco. */
 .app { position: fixed; inset: 0; overflow: hidden; background: var(--bg);
-  /* En la app instalada de iOS (fitLower): arriba queda libre la zona de la isla dinámica (--lower) y abajo termina donde iOS deja de dibujar (--lower-b); los márgenes seguros ya están contados ahí (--env-on: 0). */
-  top: var(--lower, 0px); bottom: var(--lower-b, 0px);
+  /* App instalada con la barra de estado translúcida (fitLower): arriba queda libre la zona de la isla dinámica (--lower) y abajo la app termina donde termina la ventana; los márgenes seguros ya están contados ahí (--env-top-on / --env-bottom-on). */
+  top: var(--lower, 0px); bottom: 0;
   --safe-top: calc(env(safe-area-inset-top, 0px) * var(--env-top-on, 1)); --safe-bottom: calc(env(safe-area-inset-bottom, 0px) * var(--env-bottom-on, 1)); --tray-shift: 0px; }
-/* «Hasta el borde» (fitLower): la app mide lo que mide la pantalla menos la franja de la isla dinámica; el margen de abajo (barra de inicio) vuelve a contarse adentro. */
-html.stretch .app { bottom: auto; height: calc(var(--zone-h) - var(--lower, 0px)); }
+
 /* Respaldo: si algo de la app quedara fuera de la página en el iPhone (la página mide 778 de 874 pt), la franja de abajo toma el color de la bandeja en el inicio y los asistentes. */
 @media (max-width: 599px) {
   html.floor, html.floor body { background-color: var(--floor); }
@@ -685,11 +684,11 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   const BG_TINTS = [['ninguno', 'Sin tinte'], ['ficha', 'Sigue a la ficha'], ['color', 'Un color']];
   /* La imagen va a tamaño real (1 px = 1 px, centrada) y se dibuja del tamaño que pida la pantalla (ancho + recorrido, alto + aire): bgFit la agranda si la ventana crece. */
   let BG_W = 600, BG_H = 1000; const BG_SHIFT = 80;
-  const bgDefault = () => ({ tint: 'ficha', color: CHIP_COLORS[0][0], tex: 'liso', motion: true, fit: 'borde' });
+  const bgDefault = () => ({ tint: 'ficha', color: CHIP_COLORS[0][0], tex: 'liso', motion: true });
   function cleanBg(b) {
     const d = bgDefault(); if (!b || typeof b !== 'object') return d;
     return { tint: BG_TINTS.some((t) => t[0] === b.tint) ? b.tint : d.tint, color: /^#[0-9a-f]{6}$/i.test(b.color) ? b.color : d.color,
-      tex: CHIP_TEXTURES.some((t) => t[0] === b.tex) ? b.tex : d.tex, motion: b.motion !== false, fit: b.fit === 'zona' ? 'zona' : 'borde' };
+      tex: CHIP_TEXTURES.some((t) => t[0] === b.tex) ? b.tex : d.tex, motion: b.motion !== false };
   }
   S.bg = cleanBg(S.bg);
   const bgEl = $('#bg'), homeEl = $('#home'), bgTex = $('#bgTex'), reduceMotion = matchMedia('(prefers-reduced-motion: reduce)'), CHIP_IDS = Object.keys(ICONS);
@@ -1804,7 +1803,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     h += `<div class="fx-sec"><h3>Textura</h3><div class="fx-tex" role="group" aria-label="Textura">${CHIP_TEXTURES.map(([id, n]) => `<button data-bg="tex" data-v="${id}" aria-pressed="${id === b.tex}"><i><svg class="chip" viewBox="0 0 126 126" aria-hidden="true" style="--cc:${ground};--ce:#fff"><circle class="body" cx="63" cy="63" r="63"/>${texSvg(id)}<circle class="rim" cx="63" cy="63" r="62"/></svg></i>${n}</button>`).join('')}</div></div>`;
     h += `<div class="fx-sec"><h3>Movimiento</h3>${bgSeg('motion', [['1', 'Sutil'], ['0', 'Quieto']], b.motion ? '1' : '0')}`;
     if (reduceMotion.matches) h += '<p class="note">Tenés activado «Reducir movimiento» en el teléfono: el fondo queda quieto.</p>';
-    h += `</div><div class="fx-sec"><h3>Pantalla</h3>${bgSeg('fit', [['borde', 'Hasta el borde'], ['zona', 'Solo lo que dibuja iOS']], b.fit)}<p class="note">Solo en la app instalada del iPhone. «Hasta el borde» usa toda la pantalla; si abajo se cortara algo, elegí la otra.</p></div><button class="link ghost" data-bg="reset">Restablecer fondo</button>`;
+    h += '</div><button class="link ghost" data-bg="reset">Restablecer fondo</button>';
     $('#fondo').innerHTML = h; $('#fondo').scrollTop = y;
   }
   $('#fondo').addEventListener('click', (e) => {
@@ -1896,9 +1895,9 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     if (!dbgText) return;
     const r = $('#app').getBoundingClientRect(), vv = window.visualViewport, cs = getComputedStyle($('#app')), ep = getComputedStyle(envProbe), n = (v) => Math.round(parseFloat(v) || 0), rs = document.documentElement.style;
     dbgText.textContent = `ventana ${innerWidth}×${innerHeight} · pantalla ${screen.width}×${screen.height} · visual ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} · documento ${document.documentElement.clientHeight}\n`
-      + `svh ${vhProbes[0].offsetHeight} · lvh ${vhProbes[1].offsetHeight} · dvh ${vhProbes[2].offsetHeight} · márgenes del sistema ${n(ep.paddingTop)}/${n(ep.paddingBottom)} · recorte medido ${clipped}\n`
-      + `instalada ${navigator.standalone === true}/${matchMedia('(display-mode: standalone)').matches} · modo ${S.bg.fit} · estirada ${document.documentElement.classList.contains('stretch')}\n`
-      + `app ${Math.round(r.top)}→${Math.round(r.bottom)} · márgenes de la app ${n(cs.getPropertyValue('--safe-top'))}/${n(cs.getPropertyValue('--safe-bottom'))} · arriba ${rs.getPropertyValue('--lower')} abajo ${rs.getPropertyValue('--lower-b')} · fichas bajan ${$('#app').style.getPropertyValue('--tray-shift')}`;
+      + `svh ${vhProbes[0].offsetHeight} · lvh ${vhProbes[1].offsetHeight} · dvh ${vhProbes[2].offsetHeight} · márgenes del sistema ${n(ep.paddingTop)}/${n(ep.paddingBottom)}\n`
+      + `instalada ${navigator.standalone === true}/${matchMedia('(display-mode: standalone)').matches} · color de tema ${document.querySelector('meta[name="theme-color"]').content} · fondo ${getComputedStyle(document.body).backgroundColor}\n`
+      + `app ${Math.round(r.top)}→${Math.round(r.bottom)} · márgenes de la app ${n(cs.getPropertyValue('--safe-top'))}/${n(cs.getPropertyValue('--safe-bottom'))} · app baja ${rs.getPropertyValue('--lower')} · franja fuera de la ventana ${Math.max(0, screen.height - innerHeight)} · fichas bajan ${$('#app').style.getPropertyValue('--tray-shift')}`;
   }
   /** Panel de medidas con reglas: amarilla desde arriba (cada 50 pt), cian desde abajo, y dos líneas finas en lo que valen 100svh (roja) y 100lvh (verde). Muestra hasta dónde se dibuja de verdad. */
   function toggleDebug() {
@@ -1911,30 +1910,23 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     for (let b = 0; b <= 300; b += 50) h += `<i style="position:absolute;left:0;bottom:${b}px;width:${b % 100 ? 18 : 34}px;height:1px;background:#0ff"></i>` + (b % 100 === 0 ? `<b style="position:absolute;left:36px;bottom:${b - 6}px;font-weight:400;background:#000a;color:#0ff">b${b}</b>` : '');
     h += '<i style="position:absolute;left:0;right:0;top:calc(100svh - 2px);height:2px;background:#f33"></i><i style="position:absolute;left:0;right:0;top:calc(100lvh - 2px);height:2px;background:#3f3"></i>';
     dbg.innerHTML = h; dbgText = dbg.querySelector('#dbgText');
-    dbg.querySelector('#dbgX').onclick = () => { try { localStorage.setItem('carga.medir', '0'); } catch (_) {} toggleDebug(); };
+    dbg.querySelector('#dbgX').onclick = () => toggleDebug();
     report();
   }
   /**
-   * Zona que sí se dibuja. En la app instalada de iOS lo que se ve termina antes del borde de la pantalla y arriba el contenido queda bajo la isla dinámica,
-   * donde iOS lo difumina: la app ocupa solo esa zona (arriba --lower, abajo --lower-b). No hay números de un modelo: primero se MIDE cuánto del borde de abajo queda
-   * recortado (una sonda fija + IntersectionObserver) y, si el sistema no lo informa, se usan los márgenes seguros env() de arriba y de abajo. Con la ventana ya
-   * descontada (innerHeight < pantalla) no se descuenta dos veces. Fuera de la app instalada no se toca nada.
+   * Con la barra de estado translúcida, iOS deja la ventana de la página pegada arriba y 62 pt más baja de lo que debería (innerHeight 812 de una pantalla de 874): lo que
+   * sigue abajo no es parte de la página y no se puede dibujar. Con ese dato, en la app instalada la app ocupa de abajo del margen de arriba (la isla dinámica, donde iOS
+   * difumina) hasta el borde de la ventana. Lo que sobra (pantalla − ventana) se pinta con el color de la bandeja (html.floor). Si la ventana llega al borde de la pantalla,
+   * el margen de abajo se cuenta adentro. Sin números de un modelo: todo sale de env(), innerHeight y screen.height.
    */
   const envProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)' }));
-  const clipProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;left:0;bottom:0;width:4px;height:240px;opacity:0;pointer-events:none' }));
-  let clipped = 0, zoneOn = false; // px del borde de abajo que el sistema no dibuja, medidos; y si la app está limitada a la zona que se dibuja
-  if ('IntersectionObserver' in window) new IntersectionObserver((es) => { clipped = Math.max(0, Math.round(240 - es[es.length - 1].intersectionRect.height)); fitTray(); }, { threshold: Array.from({ length: 49 }, (_, i) => i / 48) }).observe(clipProbe);
+  let zoneOn = false; // si la app está en la zona de una app instalada
   function fitLower() {
-    const cs = getComputedStyle(envProbe), top = parseFloat(cs.paddingTop) || 0, bottom = parseFloat(cs.paddingBottom) || 0;
+    const top = parseFloat(getComputedStyle(envProbe).paddingTop) || 0;
     const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; // iOS 26 ya no siempre marca navigator.standalone
-    const on = zoneOn = installed && innerHeight > innerWidth && (clipped > 0 || (top > 0 && bottom > 0));
-    const stretch = on && S.bg.fit === 'borde', root = document.documentElement, r = root.style;
-    let lower = 0, lowerB = 0;
-    if (stretch) { lower = Math.round(top); r.setProperty('--zone-h', `${Math.max(innerHeight, screen.height)}px`); } // «hasta el borde»: la app mide toda la pantalla menos la franja de la isla
-    else if (on) { lower = clipped || Math.round(top + bottom); lowerB = clipped || Math.max(0, lower - Math.max(0, screen.height - innerHeight)); } // «solo lo que dibuja iOS»
-    r.setProperty('--lower', `${lower}px`); r.setProperty('--lower-b', `${lowerB}px`);
-    r.setProperty('--env-top-on', on ? '0' : '1'); r.setProperty('--env-bottom-on', on && !stretch ? '0' : '1');
-    root.classList.toggle('stretch', stretch);
+    const on = zoneOn = installed && innerHeight > innerWidth && top > 0, gap = on ? Math.max(0, screen.height - innerHeight) : 0, r = document.documentElement.style;
+    r.setProperty('--lower', `${on ? Math.round(top) : 0}px`);
+    r.setProperty('--env-top-on', on ? '0' : '1'); r.setProperty('--env-bottom-on', gap > 0 ? '0' : '1');
   }
   const probe = $('#app').appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding-bottom:var(--safe-bottom)' })); // mide el margen seguro de abajo ya resuelto
   /**
@@ -1953,7 +1945,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   ['resize', 'orientationchange', 'pageshow'].forEach((e) => addEventListener(e, fitTray));
   if (document.fonts) document.fonts.ready.then(fitTray);
   fitTray();
-  try { if (location.hash === '#debug' || localStorage.getItem('carga.medir') !== '0') toggleDebug(); } catch (_) {} // se abre solo hasta que se cierre una vez
+  if (location.hash === '#debug') toggleDebug();
   ['resize', 'orientationchange', 'pageshow'].forEach((t) => addEventListener(t, report));
   (function longPressTopBar() {
     let t = 0; const bar = $('#topBar');
