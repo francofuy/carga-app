@@ -38,8 +38,8 @@ ul { list-style: none; }
 /* Respaldo: si algo de la app quedara fuera de la página en el iPhone (la página mide 781 de 874 pt), la franja de abajo toma el color de la bandeja en el inicio y los asistentes. */
 @media (max-width: 599px) {
   html.floor, html.floor body { background-color: var(--floor); }
-  html.floor body { background-image: linear-gradient(var(--bg), var(--bg)); background-size: 100% var(--lower, 0px); background-repeat: no-repeat; } /* taste-skill-ignore: un color plano para la franja de arriba, no un degradé */
 }
+.topband { position: fixed; z-index: 0; top: 0; left: 0; right: 0; height: var(--lower, 0px); background: var(--bg); pointer-events: none; } /* la franja de arriba (isla dinámica) con el color del fondo */
 /* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
    Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
 .app, .home {
@@ -347,6 +347,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 </style>
 </head>
 <body>
+<div class="topband" aria-hidden="true"></div>
 <main class="app" id="app">
   <div class="bg" id="bg" aria-hidden="true"><div class="bg-tint"></div><div class="bg-tex" id="bgTex"></div><div class="bg-rings"><i></i><i></i><i></i></div></div>
   <div class="probe" id="probe" style="position:absolute;visibility:hidden"></div>
@@ -1906,12 +1907,12 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
    */
   const envProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)' }));
   const clipProbe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'position:fixed;left:0;bottom:0;width:4px;height:240px;opacity:0;pointer-events:none' }));
-  let clipped = 0; // px del borde de abajo que el sistema no dibuja, medidos
+  let clipped = 0, zoneOn = false; // px del borde de abajo que el sistema no dibuja, medidos; y si la app está limitada a la zona que se dibuja
   if ('IntersectionObserver' in window) new IntersectionObserver((es) => { clipped = Math.max(0, Math.round(240 - es[es.length - 1].intersectionRect.height)); fitTray(); }, { threshold: Array.from({ length: 49 }, (_, i) => i / 48) }).observe(clipProbe);
   function fitLower() {
     const cs = getComputedStyle(envProbe), top = parseFloat(cs.paddingTop) || 0, bottom = parseFloat(cs.paddingBottom) || 0;
     const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; // iOS 26 ya no siempre marca navigator.standalone
-    const on = installed && innerHeight > innerWidth && (clipped > 0 || (top > 0 && bottom > 0));
+    const on = zoneOn = installed && innerHeight > innerWidth && (clipped > 0 || (top > 0 && bottom > 0));
     const lower = on ? clipped || Math.round(top + bottom) : 0, lowerB = on ? clipped || Math.max(0, lower - Math.max(0, screen.height - innerHeight)) : 0;
     const r = document.documentElement.style;
     r.setProperty('--lower', `${lower}px`); r.setProperty('--lower-b', `${lowerB}px`); r.setProperty('--env-on', on ? '0' : '1');
@@ -1925,7 +1926,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
     const a = $('#app'), t = $('.tray'); if (!a || !t) return;
     bgFit(); fitLower();
     document.documentElement.style.setProperty('--nf', Math.min(1, (innerWidth - 16) / 374).toFixed(3));
-    const strip = parseFloat(document.documentElement.style.getPropertyValue('--lower-b')) || 0; // franja de abajo: sigue la bandeja, sin app encima
+    const strip = zoneOn ? Math.max(0, Math.round(screen.height - a.getBoundingClientRect().bottom)) : 0; // franja entre el borde de la app y el de la pantalla: sigue la bandeja, sin app encima
     const room = t.offsetHeight - (parseFloat(getComputedStyle(probe).paddingBottom) || 0); // hasta donde puede llegar el contenido
     a.style.setProperty('--tray-shift', `${Math.round(Math.max(0, Math.min((room + strip) / 2 - 127.5, room - 215 - 6)))}px`);
     report();
