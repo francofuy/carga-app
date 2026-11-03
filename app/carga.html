@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default"> <!-- barra opaca que toma el color de theme-color (con «black» siempre es negra) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Carga">
 <meta name="theme-color" content="#0b1913">
 <link rel="manifest" href="manifest.webmanifest">
@@ -40,6 +40,9 @@ ul { list-style: none; }
 @media (max-width: 599px) {
   html.floor, html.floor body { background-color: var(--floor); }
 }
+/* iOS 26.1+: la barra de estado negra reclama su zona y la página no llega ahí (no se puede pintar). Un degradé corto de negro a transparente, detrás del texto, empalma la barra con el fondo. */
+html.below-bar .bg::after, html.below-bar .fn::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 56px; pointer-events: none; background: linear-gradient(#000, rgba(0, 0, 0, 0)); } /* taste-skill-ignore: empalme con la barra de estado, no decoración */
+html.below-bar .fn::before { z-index: -1; }
 .topband { position: fixed; z-index: 0; top: 0; left: 0; right: 0; height: var(--lower, 0px); background: var(--bg); pointer-events: none; } /* la franja de arriba (isla dinámica) con el color del fondo */
 /* Material translúcido tintado: superficies grandes (--glass), contenedores sobre ellas (--glass-in) y el elegido (--glass-hi).
    Cada uno es el tinte del fondo sobre un gris casi negro, con transparencia: dejan ver la textura y siguen al color de la ficha. */
@@ -1925,6 +1928,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   function fitLower() {
     const top = parseFloat(getComputedStyle(envProbe).paddingTop) || 0;
     const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; // iOS 26 ya no siempre marca navigator.standalone
+    document.documentElement.classList.toggle('below-bar', installed && innerHeight > innerWidth && top === 0); // iOS dejó la página debajo de la barra de estado
     const on = zoneOn = installed && innerHeight > innerWidth && top > 0, gap = on ? Math.max(0, screen.height - innerHeight) : 0, r = document.documentElement.style;
     r.setProperty('--lower', `${on ? Math.round(top) : 0}px`);
     r.setProperty('--env-top-on', on ? '0' : '1'); r.setProperty('--env-bottom-on', gap > 0 ? '0' : '1');
