@@ -1,6 +1,6 @@
 /*
  * Laboratorio de efectos: una capa OPCIONAL sobre la app real. Se carga solo desde lab.html (nunca desde carga.html).
- * Todo empieza apagado (la app se ve idéntica); el botón «Lab» abre la hoja con los efectos. Los ajustes quedan en 'carga.lab.fx'.
+ * Todo empieza apagado (la app se ve idéntica); los efectos se eligen en Ajustes → Efectos. Los ajustes quedan en 'carga.lab.fx'.
  * Los efectos usan solo el DOM de la app (#bg, #rail, .tray, .fn, svg.chip…): no tocan su código ni sus datos.
  */
 (() => {
@@ -389,7 +389,7 @@
   }
   /* ---------- Luz al tocar: un pulso del color de la ficha donde apoyás el dedo ---------- */
   document.addEventListener('pointerdown', (e) => {
-    if (!FX.touchLight || e.target.closest('.lab-sheet, .lab-btn')) return;
+    if (!FX.touchLight || e.target.closest('#fn-efectos')) return;
     const host = layer('lab-pulses'), r = bg.getBoundingClientRect(), d = el('i');
     d.style.left = `${e.clientX - r.left}px`; d.style.top = `${e.clientY - r.top}px`; host.appendChild(d);
     if (d.animate) d.animate([{ transform: 'translate(-50%, -50%) scale(0.15)', opacity: 0.95 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 }], { duration: 950, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }).onfinish = () => d.remove(); else d.remove();
@@ -423,7 +423,7 @@
     if (!FX.sound) return;
     try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = 'sine'; o.frequency.value = 900; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.06); } catch (_) {}
   };
-  document.addEventListener('pointerdown', (e) => { if (e.target.closest('button, .slot') && !e.target.closest('.lab-sheet')) { buzz(); blip(); } }, true);
+  document.addEventListener('pointerdown', (e) => { if (e.target.closest('button, .slot') && !e.target.closest('#fn-efectos')) { buzz(); blip(); } }, true);
   let lastI = -1;
   rail.addEventListener('touchmove', () => { const i = Math.round(rail.scrollLeft / 100); if (i !== lastI) { lastI = i; buzz(); blip(); } }, { passive: true });
 
@@ -628,66 +628,119 @@
   ];
   const mixes = () => { try { return JSON.parse(localStorage.getItem(MIX_KEY)) || {}; } catch (_) { return {}; } };
   const saveMixes = (m) => { try { localStorage.setItem(MIX_KEY, JSON.stringify(m)); } catch (_) {} };
-  const btn = el('button', 'lab-btn', 'Lab'), sheet = el('div', 'lab-sheet'), tabs = el('div', 'lab-tabs'), body = el('div', 'lab-body');
-  btn.setAttribute('aria-label', 'Laboratorio de efectos'); sheet.inert = true; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Laboratorio de efectos');
-  sheet.innerHTML = '<div class="lab-head"><div><h2>Laboratorio</h2><p>Todo apagado = idéntica a la app. Probá y decime qué te gusta.</p></div><button class="lab-x" aria-label="Cerrar">×</button></div>';
-  sheet.append(tabs, body);
-  const open = (v) => { sheet.classList.toggle('open', v); sheet.inert = !v; };
-  btn.addEventListener('click', () => open(!sheet.classList.contains('open')));
-  $('.lab-x', sheet).addEventListener('click', () => open(false));
-  document.addEventListener('pointerdown', (e) => { if (sheet.classList.contains('open') && !e.target.closest('.lab-sheet, .lab-btn')) open(false); }, true);
+  /* ----- La pantalla «Efectos» (vive dentro de Ajustes, con el mismo aspecto que las demás pantallas de la app) ----- */
+  const CHEV = '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6"/></svg>';
+  const SUB = {
+    Fichas: 'Giro, destello, metal, relieve y textura', Fondo: 'Tinte, degradé, partículas, grano y ondas', Color: 'Looks, temperatura, duotono y acento',
+    Escenas: 'Animaciones reales detrás de la app', Iluminación: 'Luz principal, cielo, neón, bokeh y rayos', Bandeja: 'Cristal, esquinas y material',
+    Movimiento: 'Transiciones, entradas y vibración', Texto: 'Letra, grosor y espaciado', Combinaciones: 'Elegir, guardar, compartir y restablecer',
+  };
+  const sec = el('section', 'fn');
+  sec.id = 'fn-efectos'; sec.inert = true; sec.setAttribute('aria-label', 'Efectos');
+  sec.innerHTML = '<header class="fn-bar"><button class="icon" data-ef-back aria-label="Volver"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M14 4l-7 7 7 7"/></svg></button><h2>Efectos</h2><span></span></header>'
+    + '<div class="fn-body"><div class="scroll" id="efectos"></div></div>';
+  app.appendChild(sec);
+  const list = $('#efectos', sec), title = $('h2', sec), lab = window.__carga;
+  let view = -1; // -1 = la lista de secciones; 0…UI.length-1 = una sección; UI.length = Combinaciones
+  const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+  const activeIn = (i) => UI[i][1].filter((it) => FX[it[1]] !== DEF[it[1]]).length;
+  const diff = () => Object.fromEntries(Object.entries(FX).filter(([k, v]) => v !== DEF[k]));
+  const efSub = () => { const n = Object.keys(diff()).length; return n ? plural(n, 'ajuste activo', 'ajustes activos') : 'Luz, color, escenas, movimiento y más'; };
 
-  let tab = 0;
   function row(it) {
-    const [kind, key, label, sub] = it, r = el('div', 'lab-row'), text = el('div', '', `${label}${sub ? `<small>${sub}</small>` : ''}`);
-    r.appendChild(text);
+    const [kind, key, label, sub] = it, r = el('div', `ef-row ${kind}`), t = el('div', 'ef-t', `<b>${label}</b>${sub ? `<em>${sub}</em>` : ''}`);
     if (kind === 'sw') {
-      const s = el('button', 'lab-sw'); s.setAttribute('role', 'switch'); s.setAttribute('aria-checked', !!FX[key]);
-      s.addEventListener('click', () => { FX[key] = !FX[key]; s.setAttribute('aria-checked', FX[key]); apply(); if (key === 'intro' && FX.intro) intro(); }); r.appendChild(s);
+      const s = el('button', 'ef-sw'); s.setAttribute('role', 'switch'); s.setAttribute('aria-checked', !!FX[key]); s.setAttribute('aria-label', label);
+      s.addEventListener('click', () => { FX[key] = !FX[key]; s.setAttribute('aria-checked', FX[key]); apply(); if (key === 'intro' && FX.intro) intro(); });
+      r.append(t, s);
     } else if (kind === 'rg') {
-      const [, , , , min, max, step, unit] = it, i = el('input'), o = el('output', '', `${FX[key]}${unit}`);
+      const [, , , , min, max, step, unit] = it, i = el('input'), o = el('output', '', `${FX[key]}${unit}`), top = el('div', 'ef-top');
       Object.assign(i, { type: 'range', min, max, step, value: FX[key] }); i.setAttribute('aria-label', label);
-      i.addEventListener('input', () => { FX[key] = Number(i.value); o.textContent = `${FX[key]}${unit}`; apply(); }); r.append(o, i);
+      i.addEventListener('input', () => { FX[key] = Number(i.value); o.textContent = `${FX[key]}${unit}`; apply(); });
+      top.append(t, o); r.append(top, i);
     } else if (kind === 'sg') {
-      const opts = it[4], g = el('div', 'lab-seg');
-      opts.forEach(([v, l]) => { const b = el('button', '', l); b.setAttribute('aria-pressed', String(FX[key]) === String(v)); b.addEventListener('click', () => { FX[key] = v; $$('button', g).forEach((x) => x.setAttribute('aria-pressed', x === b)); apply(); }); g.appendChild(b); });
-      r.classList.add('stack'); r.appendChild(g);
+      const g = el('div', 'ef-chips');
+      it[4].forEach(([v, l]) => {
+        const b = el('button', '', l); b.setAttribute('aria-pressed', String(FX[key]) === String(v));
+        b.addEventListener('click', () => { FX[key] = v; $$('button', g).forEach((x) => x.setAttribute('aria-pressed', x === b)); apply(); });
+        g.appendChild(b);
+      });
+      r.append(t, g);
     } else if (kind === 'co') {
-      const wrap = el('div', 'lab-seg nowrap'), c = el('input'), x = el('button', '', FX[key] ? 'Quitar' : 'Sin usar');
+      const wrap = el('div', 'ef-color'), c = el('input'), x = el('button', 'ef-pill', FX[key] ? 'Quitar' : 'Sin usar');
       Object.assign(c, { type: 'color', value: FX[key] || '#4fb58a' }); c.setAttribute('aria-label', label);
       c.addEventListener('input', () => { FX[key] = c.value; x.textContent = 'Quitar'; apply(); });
       x.addEventListener('click', () => { FX[key] = null; x.textContent = 'Sin usar'; apply(); });
-      wrap.append(c, x); r.appendChild(wrap);
+      wrap.append(c, x); r.append(t, wrap);
     }
     return r;
   }
-  const json = el('pre', 'lab-json');
-  const diff = () => Object.fromEntries(Object.entries(FX).filter(([k, v]) => v !== DEF[k]));
-  function showJson() { const d = diff(); json.textContent = Object.keys(d).length ? JSON.stringify(d, null, 1) : 'Sin cambios: igual a la app.'; }
-  function mixesTab() {
-    body.append(el('h4', '', 'Combinaciones'));
-    const pr = el('div', 'lab-presets');
-    BUILTIN.forEach(([n, v]) => { const b = el('button', '', n); b.addEventListener('click', () => { FX = { ...DEF, ...v }; apply(); if (FX.intro) intro(); }); pr.appendChild(b); });
-    body.appendChild(pr);
-    body.append(el('h4', '', 'Mis mezclas'));
-    const mine = el('div', 'lab-presets'), m = mixes();
-    Object.keys(m).forEach((n) => { const b = el('button', '', n), x = el('button', 'del', '×'); x.setAttribute('aria-label', `Borrar ${n}`); b.addEventListener('click', () => { FX = { ...DEF, ...m[n] }; apply(); }); x.addEventListener('click', () => { const q = mixes(); delete q[n]; saveMixes(q); build(); }); const w = el('span', 'lab-mix'); w.append(b, x); mine.appendChild(w); });
-    const sv = el('button', 'lab-act', 'Guardar la mezcla actual'); sv.addEventListener('click', () => { const n = (prompt('Nombre de la mezcla') || '').trim(); if (n) { const q = mixes(); q[n] = diff(); saveMixes(q); build(); } });
-    body.append(mine, sv, el('h4', '', 'Compartir o importar'));
-    const ta = el('textarea', 'lab-ta'); ta.placeholder = 'Pegá acá una mezcla (JSON) y tocá «Aplicar»'; ta.value = JSON.stringify(diff());
-    const ap = el('button', 'lab-act', 'Aplicar lo pegado'), cp = el('button', 'lab-act', 'Copiar la actual'), rs = el('button', 'lab-act danger', 'Restablecer todo');
+
+  const json = el('pre', 'ef-json');
+  function showJson() {
+    const d = diff(); json.textContent = Object.keys(d).length ? JSON.stringify(d, null, 1) : 'Sin cambios: igual a la app.';
+    const s = $('[data-ef="open"] em', $('#ajustes')); if (s) s.textContent = efSub();
+  }
+
+  function listView() {
+    UI.forEach(([n], i) => { const a = activeIn(i); list.insertAdjacentHTML('beforeend', `<button class="lrow" data-ef-cat="${i}"><span><b>${n}</b><em>${SUB[n]}${a ? ` · ${plural(a, 'activo', 'activos')}` : ''}</em></span>${CHEV}</button>`); });
+    list.insertAdjacentHTML('beforeend', `<h3>Mezclas</h3><button class="lrow" data-ef-cat="${UI.length}"><span><b>Combinaciones</b><em>${SUB.Combinaciones}</em></span>${CHEV}</button>`);
+  }
+  function catView() {
+    UI[view][1].forEach((it) => list.appendChild(row(it)));
+    const rs = el('button', 'link ghost', 'Restablecer esta sección');
+    rs.addEventListener('click', () => { UI[view][1].forEach((it) => { FX[it[1]] = DEF[it[1]]; }); apply(); build(); });
+    list.appendChild(rs);
+  }
+  function mixesView() {
+    const chips = (cls = '') => el('div', `ef-chips ${cls}`), pill = (t, cls = '') => el('button', `ef-pill ${cls}`, t);
+    list.append(el('h3', '', 'Combinaciones'));
+    const pr = chips();
+    BUILTIN.forEach(([n, v]) => { const b = pill(n); b.addEventListener('click', () => { FX = { ...DEF, ...v }; apply(); if (FX.intro) intro(); }); pr.appendChild(b); });
+    list.appendChild(pr);
+    list.append(el('h3', '', 'Mis mezclas'));
+    const mine = chips(), m = mixes();
+    Object.keys(m).forEach((n) => {
+      const b = pill(n), x = pill('×', 'del'), w = el('span', 'ef-mix');
+      x.setAttribute('aria-label', `Borrar ${n}`);
+      b.addEventListener('click', () => { FX = { ...DEF, ...m[n] }; apply(); });
+      x.addEventListener('click', () => { const q = mixes(); delete q[n]; saveMixes(q); build(); });
+      w.append(b, x); mine.appendChild(w);
+    });
+    const sv = pill('Guardar la mezcla actual', 'act');
+    sv.addEventListener('click', () => { const n = (prompt('Nombre de la mezcla') || '').trim(); if (n) { const q = mixes(); q[n] = diff(); saveMixes(q); build(); } });
+    list.append(mine, sv, el('h3', '', 'Compartir o importar'));
+    const ta = el('textarea', 'ef-ta'); ta.placeholder = 'Pegá acá una mezcla (JSON) y tocá «Aplicar»'; ta.value = JSON.stringify(diff());
+    const ap = pill('Aplicar lo pegado'), cp = pill('Copiar la actual'), rs = pill('Restablecer todo', 'danger'), bar = chips('gap');
     ap.addEventListener('click', () => { try { FX = { ...DEF, ...JSON.parse(ta.value) }; apply(); build(); } catch (_) { ta.value = 'Ese texto no es una mezcla válida.'; } });
     cp.addEventListener('click', () => { ta.value = JSON.stringify(diff()); ta.select(); try { navigator.clipboard.writeText(ta.value); } catch (_) {} });
     rs.addEventListener('click', () => { FX = { ...DEF }; apply(); build(); });
-    const bar = el('div', 'lab-presets'); bar.append(ap, cp, rs);
-    body.append(ta, bar, el('h4', '', 'Lo que está encendido'), json); showJson();
+    bar.append(ap, cp, rs);
+    list.append(ta, bar, el('h3', '', 'Lo que está encendido'), json); showJson();
   }
-  function build() {
-    tabs.innerHTML = ''; body.innerHTML = '';
-    [...UI.map((u) => u[0]), 'Mezclas'].forEach((n, i) => { const b = el('button', '', n); b.setAttribute('aria-pressed', i === tab); b.addEventListener('click', () => { tab = i; build(); }); tabs.appendChild(b); });
-    if (tab < UI.length) { UI[tab][1].forEach((it) => body.appendChild(row(it))); body.append(el('h4', '', 'Lo que está encendido'), json); showJson(); } else mixesTab();
-    body.scrollTop = 0;
+  /** Redibuja la pantalla según `view`; con `top` vuelve arriba (cambio de sección), si no conserva el desplazamiento. */
+  function build(top) {
+    const y = list.scrollTop; list.innerHTML = '';
+    title.textContent = view < 0 ? 'Efectos' : view < UI.length ? UI[view][0] : 'Combinaciones';
+    if (view < 0) listView(); else if (view < UI.length) catView(); else mixesView();
+    list.scrollTop = top ? 0 : y;
   }
-  build(); document.body.append(btn, sheet);
+  const go = (v) => { view = v; build(true); };
+  list.addEventListener('click', (e) => { const c = e.target.closest('[data-ef-cat]'); if (c) go(Number(c.dataset.efCat)); });
+  $('[data-ef-back]', sec).addEventListener('click', () => (view < 0 ? lab.closeFn() : go(-1)));
+
+  /* ----- La entrada en Ajustes (la app redibuja esa lista entera, así que se vuelve a poner cada vez) ----- */
+  const aj = $('#ajustes');
+  function inject() {
+    if (!aj || $('[data-ef="open"]', aj)) return;
+    const at = $('[data-aj="fondo"]', aj); if (!at) return;
+    at.insertAdjacentHTML('afterend', `<button class="lrow nav" data-ef="open"><span><b>Efectos</b><em>${efSub()}</em></span>${CHEV}</button>`);
+  }
+  if (aj) {
+    new MutationObserver(inject).observe(aj, { childList: true });
+    aj.addEventListener('click', (e) => { if (e.target.closest('[data-ef="open"]')) { view = -1; build(true); lab.openFn('efectos'); } });
+    inject();
+  }
+  build(true);
   apply(); if (FX.intro) intro();
 })();
