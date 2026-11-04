@@ -221,6 +221,7 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
 .field { display: block; padding: 10px 0; }
 .field label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--ink-2); }
 .field input, .field select { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--glass-in); color: var(--ink); font: inherit; font-size: 17px; -webkit-user-select: text; user-select: text; color-scheme: dark; appearance: none; }
+.field input[type="date"] { appearance: auto; -webkit-appearance: auto; min-width: 0; text-align: center; }
 .field .hintt { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pill { display: block; width: 100%; height: 48px; margin-top: 22px; border-radius: 999px; background: #fff; color: #000; font-size: 17px; font-weight: 600; transition: transform 140ms var(--ease-out); }
@@ -1059,6 +1060,10 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       if (p && st.pick) { touched = true; st.pick(p.dataset.pick); render(); }
       else if (a && st.act) { touched = true; st.act(a.dataset.act, a.dataset); render(); }
     });
+    extra.addEventListener('change', (e) => { // un campo del paso (p. ej. la fecha): el valor nuevo va a act(nombre, { v })
+      const st = cur(), c = e.target.closest('[data-chg]');
+      if (c && st.act) { touched = true; st.act(c.dataset.chg, { v: e.target.value }); render(); }
+    });
     // Tocar el número grande abre el teclado para escribir el valor exacto.
     valueBtn.addEventListener('click', () => {
       const dc = cur().dial && cur().dial(); if (!dc) return;
@@ -1168,13 +1173,13 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
   }
 
   /* ================= Registrar carga (ya cargada) ================= */
-  const R = { kind: 'home', by: 'kwh', kwh: 25, from: 20, to: 80, when: 'now', day: 0, endMin: 0, startMin: 0, startTouched: false, net: '', varIdx: 0, price: null, fee: null, odo: null };
+  const R = { kind: 'home', by: 'kwh', kwh: 25, from: 20, to: 80, when: 'now', day: 0, pickDay: false, endMin: 0, startMin: 0, startTouched: false, net: '', varIdx: 0, price: null, fee: null, odo: null };
 
   /** Valores de partida a partir del historial: la última carga y el % de inicio típico. */
   function initCargar() {
     const sorted = [...S.charges].sort((a, b) => new Date(b.startAt) - new Date(a.startAt)), starts = S.charges.filter((c) => c.startPct != null).map((c) => c.startPct);
     const from = starts.length ? r1(starts.reduce((a, b) => a + b, 0) / starts.length) : 20;
-    Object.assign(R, { kind: 'home', by: 'kwh', kwh: sorted[0] ? r1(sorted[0].kwh) : 25, from, to: Math.max(from + GAP, sorted[0] && sorted[0].endPct != null ? sorted[0].endPct : 80), when: 'now', day: 0, endMin: minOf(new Date()), startTouched: false, net: '', varIdx: 0, price: null, fee: null, odo: null });
+    Object.assign(R, { kind: 'home', by: 'kwh', kwh: sorted[0] ? r1(sorted[0].kwh) : 25, from, to: Math.max(from + GAP, sorted[0] && sorted[0].endPct != null ? sorted[0].endPct : 80), when: 'now', day: 0, pickDay: false, endMin: minOf(new Date()), startTouched: false, net: '', varIdx: 0, price: null, fee: null, odo: null });
     regWiz.start();
   }
   const rGroup = () => groups().find((g) => g.key === R.net) || null;
@@ -1223,7 +1228,14 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       return { kwh, price: R.price, fee: R.fee || 0, at: rEnd(now), cost: L.computePublicChargeCost(R.price, kwh, R.fee || 0) };
     } catch (e) { return { kwh, error: e.message }; }
   }
-  const dayTxt = (d, now) => (d.toDateString() === now.toDateString() ? 'hoy' : d.toDateString() === new Date(now.getTime() - 864e5).toDateString() ? 'ayer' : shortDate(d));
+  const dayTxt = (d, now) => (d.toDateString() === now.toDateString() ? 'hoy' : d.toDateString() === new Date(now.getTime() - 864e5).toDateString() ? 'ayer' : `${DOW[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()]}${d.getFullYear() !== now.getFullYear() ? ` de ${d.getFullYear()}` : ''}`);
+  const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // AAAA-MM-DD en hora local, el formato del selector de fecha
+  /** Días que pasaron entre una fecha elegida (AAAA-MM-DD) y hoy; null si no es una fecha válida. Nunca negativo: no se registran cargas del futuro. */
+  function daysAgo(v, now) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return null;
+    const picked = new Date(+m[1], +m[2] - 1, +m[3]); if (isNaN(picked)) return null;
+    return Math.max(0, Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - picked) / 864e5));
+  }
 
   const REG_STEPS = () => {
     const s = [REG.where, REG.how];
@@ -1267,8 +1279,15 @@ h3 { margin: 30px 0 4px; font-size: 13px; font-weight: 400; color: var(--ink-2);
       value: () => R.when, pick: (v) => { R.when = v; } },
     hend: { id: 'hend', get q() { return R.kind === 'home' ? '¿A qué hora terminó?' : '¿A qué hora fue?'; },
       dial: () => ({ ...CLOCK_CFG, aria: 'Hora', get: () => R.endMin, set: (v) => { R.endMin = wrap(v); }, seed: R.endMin, label: () => mm(R.endMin) }),
-      act: (name, d) => { if (name === 'day') R.day = Number(d.v); },
-      view: () => { const now = new Date(), e = rEnd(now); return { num: mm(R.endMin), ctx: `${cap(dayTxt(e, now))} a las ${hhmm(e)}${R.day === 0 && minOf(e) !== R.endMin ? ' (esa hora de hoy todavía no llegó)' : ''}`, extra: seg2('day', [[0, 'Hoy'], [1, 'Ayer']], R.day) }; } },
+      act: (name, d) => {
+        if (name === 'day') { R.pickDay = d.v === 'o'; if (R.pickDay) R.day = Math.max(R.day, 2); else R.day = Number(d.v); } // «Otro día» arranca en antes de ayer
+        else if (name === 'date') { const n = daysAgo(d.v, new Date()); if (n != null) R.day = n; }
+      },
+      view: () => {
+        const now = new Date(), e = rEnd(now);
+        const date = R.pickDay ? `<div class="field"><label for="dayIn">Fecha de la carga</label><input id="dayIn" class="dayin" type="date" data-chg="date" value="${isoDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - R.day))}" max="${isoDay(now)}" min="${now.getFullYear() - 5}-01-01"></div>` : '';
+        return { num: mm(R.endMin), ctx: `${cap(dayTxt(e, now))} a las ${hhmm(e)}${R.day === 0 && minOf(e) !== R.endMin ? ' (esa hora de hoy todavía no llegó)' : ''}`, extra: seg2('day', [[0, 'Hoy'], [1, 'Ayer'], ['o', 'Otro día']], R.pickDay ? 'o' : R.day) + date };
+      } },
     hstart: { id: 'hstart', q: '¿A qué hora empezó?',
       dial: () => ({ ...CLOCK_CFG, aria: 'Hora de inicio', get: () => R.startMin, set: (v) => { R.startMin = wrap(v); R.startTouched = true; }, seed: R.startMin, label: () => mm(R.startMin) }),
       // por defecto, la hora que sale de los kWh y la potencia del cargador

@@ -17,6 +17,7 @@ La dirección visual y sus reglas están en `DESIGN.md`. Leerlo antes de tocar l
 - **Cargar datos:** asistentes de una pregunta por pantalla (Registrar y Programar comparten un mismo motor, `createWizard`). Cada pregunta usa el dial: número grande, círculo central, ajuste fino −1 / −0,1 / +0,1 / +1 y regla. Los datos opcionales tienen «Omitir».
 - **Borrador:** cada asistente se guarda solo al responder algo (clave `carga.v3.borrador`, vence a las 48 h). Si se cierra la app, Inicio muestra «Borrador sin guardar» con Continuar / Eliminar y se retoma en el mismo paso. «Atrás» desde el primer paso, guardar o programar lo descartan; cerrar sin querer lo conserva. El formulario de confirmar una carga terminada también se conserva (`S.active.cf`).
 - Valores con decimales reales: kWh hasta 2, % hasta 1 (ver `app/LOGICA.md`).
+- **Registrar una carga atrasada:** en «Elegir el horario», el paso de la hora trae Hoy / Ayer / **Otro día** (`R.pickDay`, `R.day` = días atrás); «Otro día» muestra un selector de fecha (`#dayIn`, `data-chg`, `daysAgo`) que no acepta fechas futuras. El costo se calcula con el motor para ese día y esa hora.
 
 ## Reglas
 - Menos es más: antes de agregar un elemento, preguntarse si se puede esconder o borrar.
