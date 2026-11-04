@@ -1,0 +1,89 @@
+/* Laboratorio de efectos (opcional, encima de la app real). Todo está apagado hasta que se enciende desde el botón «Lab». */
+
+/* ---------- Botón y hoja del laboratorio ---------- */
+.lab-btn { position: fixed; z-index: 900; right: 12px; top: calc(var(--lower, 0px) + env(safe-area-inset-top, 0px) * var(--env-top-on, 1) + 10px); width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(20, 22, 22, 0.72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; display: grid; place-items: center; font: 600 11px/1 system-ui, sans-serif; letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.lab-btn:active { transform: scale(0.94); }
+.lab-sheet { position: fixed; z-index: 901; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); max-height: 80vh; max-height: 80dvh; display: flex; flex-direction: column; border-radius: 28px; color: #fff;
+  background: rgba(16, 20, 18, 0.94); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(115%); visibility: hidden; transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 380ms; }
+.lab-sheet.open { transform: none; visibility: visible; transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s; }
+.lab-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px 20px; }
+.lab-head h2 { font-size: 17px; font-weight: 600; }
+.lab-head p { margin-top: 2px; font-size: 12px; color: #a3a3aa; }
+.lab-x { width: 44px; height: 44px; font-size: 22px; color: #a3a3aa; }
+.lab-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px 18px; scrollbar-width: none; }
+.lab-body::-webkit-scrollbar { display: none; }
+.lab-body h4 { margin: 18px 0 2px; font-size: 12px; font-weight: 500; color: #a3a3aa; }
+.lab-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.07); font-size: 15px; }
+.lab-row:last-child { border: 0; }
+.lab-row small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.3; color: #a3a3aa; }
+.lab-row output { min-width: 34px; text-align: right; font-size: 13px; color: #a3a3aa; font-variant-numeric: tabular-nums; }
+.lab-row input[type="range"] { width: 130px; accent-color: #4fb58a; }
+.lab-row input[type="color"] { width: 44px; height: 32px; padding: 0; border: 0; background: none; }
+.lab-sw { flex: none; position: relative; width: 51px; height: 31px; border-radius: 999px; background: #39393d; transition: background-color 200ms; }
+.lab-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1); }
+.lab-sw[aria-checked="true"] { background: #4fb58a; }
+.lab-sw[aria-checked="true"]::after { transform: translateX(20px); }
+.lab-seg { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 190px; }
+.lab-seg button { min-height: 32px; padding: 0 11px; border-radius: 999px; font-size: 13px; background: rgba(255, 255, 255, 0.08); color: #d1d1d6; }
+.lab-seg button[aria-pressed="true"] { background: #fff; color: #000; }
+.lab-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lab-presets button { min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; background: rgba(255, 255, 255, 0.1); }
+.lab-presets button:active { transform: scale(0.96); }
+.lab-json { margin-top: 12px; padding: 10px; border-radius: 14px; background: rgba(0, 0, 0, 0.35); font: 11px/1.35 ui-monospace, Menlo, monospace; color: #cfd8d3; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+
+/* ---------- Capas de fondo (dentro de .bg, detrás del texto) ---------- */
+.lab-layer { position: absolute; inset: 0; pointer-events: none; }
+.lab-aurora { overflow: hidden; }
+.lab-aurora i { position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; background: var(--bgk, #4fb58a); filter: blur(64px); opacity: 0.3; animation: labdrift 24s ease-in-out infinite alternate; }
+.lab-aurora i:nth-child(1) { left: -22%; top: -8%; }
+.lab-aurora i:nth-child(2) { right: -30%; top: 30%; animation-duration: 30s; animation-delay: -9s; opacity: 0.22; }
+.lab-aurora i:nth-child(3) { left: 8%; bottom: 12%; animation-duration: 36s; animation-delay: -17s; opacity: 0.18; }
+@keyframes labdrift { to { transform: translate(24%, 18%) scale(1.28); } }
+.app.fn-open .lab-aurora i { animation-play-state: paused; }
+.lab-grain { mix-blend-mode: overlay; }
+
+/* ---------- Fichas ---------- */
+html.fx-tilt .slot { perspective: 520px; }
+html.fx-tilt .slot .c { rotate: y calc(var(--lab-d, 0) * var(--fx-tilt, 0) * -1deg); }
+html.fx-shine .slot .c::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: max(0, calc((var(--k, 0) - 0.85) * 6.6)); mix-blend-mode: soft-light;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.5) 50%, transparent 62%) 150% 0 / 260% 100% no-repeat; animation: labshine 4.2s ease-in-out infinite; }
+@keyframes labshine { 0%, 55% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+html.fx-spin .chip .mk { transform-box: view-box; transform-origin: 63px 63px; animation: labspin calc(var(--fx-spin, 60) * 1s) linear infinite; }
+@keyframes labspin { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+html.fx-filled .chip .ic { fill: currentColor; fill-opacity: 0.22; }
+html.fx-hue .chip { filter: hue-rotate(calc(var(--fx-hue, 0) * 1deg)) saturate(calc(var(--fx-sat, 100) / 100)); }
+html.fx-cc .chip { --cc: var(--fx-cc) !important; }
+html.fx-ce .chip { --ce: var(--fx-ce) !important; }
+.chip .lab-tx { fill: none; stroke: color-mix(in srgb, var(--ce, #fff) calc(var(--k, 1) * 100%), #4a4a4e); opacity: calc(0.55 - var(--k, 1) * 0.2); }
+
+/* ---------- Bandeja y cristal ---------- */
+html.fx-spot .tray { background-image: radial-gradient(circle 160px at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.13), transparent 70%); }
+html.fx-glass .app, html.fx-glass .home { --glass: color-mix(in srgb, color-mix(in srgb, var(--bgk, #000) calc(var(--bgt, 0) * 24%), #0b0b0b) calc(var(--fx-ga, 82) * 1%), transparent); }
+html.fx-blur .tray, html.fx-blur .tray2, html.fx-blur #dayHud { -webkit-backdrop-filter: blur(calc(var(--fx-blur, 14) * 1px)); backdrop-filter: blur(calc(var(--fx-blur, 14) * 1px)); }
+html.fx-rad .tray, html.fx-rad .tray2 { border-radius: calc(var(--fx-rad, 44) * 1px) calc(var(--fx-rad, 44) * 1px) 0 0; }
+
+/* ---------- Ondas ---------- */
+html.fx-wave .bg-rings i { animation-duration: calc(var(--fx-wave, 9) * 1s); }
+html.fx-wave1 .bg-rings i:nth-child(n + 2), html.fx-wave2 .bg-rings i:nth-child(3) { display: none; }
+.bg-rings { opacity: var(--fx-wopa, 1); }
+
+/* ---------- Transiciones entre pantallas ---------- */
+html.fx-tr-push .fn { transform: translateX(100%); transition: opacity 260ms var(--ease-out), transform 440ms var(--ease-drawer), visibility 0s 440ms; }
+html.fx-tr-push .fn.open { transform: none; transition: opacity 200ms var(--ease-out), transform 440ms var(--ease-drawer), visibility 0s; }
+html.fx-tr-sheet .fn { transform: translateY(100%); transition: opacity 260ms var(--ease-out), transform 460ms var(--ease-drawer), visibility 0s 460ms; }
+html.fx-tr-sheet .fn.open { transform: none; transition: opacity 200ms var(--ease-out), transform 460ms var(--ease-drawer), visibility 0s; }
+html.fx-tr-zoom .fn { transform: scale(0.9); filter: blur(10px); transition: opacity 260ms var(--ease-out), transform 420ms var(--ease-drawer), filter 360ms var(--ease-out), visibility 0s 420ms; }
+html.fx-tr-zoom .fn.open { transform: none; filter: none; transition: opacity 220ms var(--ease-out), transform 420ms var(--ease-drawer), filter 360ms var(--ease-out), visibility 0s; }
+html.fx-tr-fade .fn { transform: none; transition: opacity 320ms var(--ease-out), visibility 0s 320ms; }
+html.fx-tr-fade .fn.open { transition: opacity 320ms var(--ease-out), visibility 0s; }
+@keyframes labrise { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- Tipografía ---------- */
+html.fx-font-rounded { --font: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif; }
+html.fx-font-mono { --font: ui-monospace, "SF Mono", Menlo, monospace; }
+html.fx-font-serif .head, html.fx-font-serif .big, html.fx-font-serif .value .num { font-family: ui-serif, "New York", Georgia, serif; font-weight: 400; }
+
+@media (prefers-reduced-motion: reduce) { .lab-aurora i, html.fx-shine .slot .c::after, html.fx-spin .chip .mk { animation: none !important; } }

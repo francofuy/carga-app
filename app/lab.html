@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Carga Lab">
+<meta name="theme-color" content="#000000">
+<title>Carga Lab</title>
+<style>html, body { margin: 0; height: 100%; background: #000; color: #8e8e93; font: 15px system-ui, sans-serif; } body { display: grid; place-items: center; }</style>
+</head>
+<body>
+<p id="msg">Cargando el laboratorio…</p>
+<script>
+/*
+ * Laboratorio: la app real (carga.html) con una capa de efectos opcionales (lab.js + lab.css) encima. No duplica la app:
+ * lee carga.html y la escribe de nuevo con otro nombre de almacenamiento (carga.lab.v3), así que sus datos y ajustes
+ * no tocan los de la app real. La primera vez copia tus datos actuales para que se vea idéntica.
+ */
+(async () => {
+  try {
+    for (const k of ['', '.redes', '.borrador']) {
+      if (localStorage.getItem('carga.lab.v3' + k) == null && localStorage.getItem('carga.v3' + k) != null) localStorage.setItem('carga.lab.v3' + k, localStorage.getItem('carga.v3' + k));
+    }
+  } catch (_) {}
+  try {
+    let t = await (await fetch('carga.html', { cache: 'no-store' })).text();
+    t = t.replaceAll('carga.v3', 'carga.lab.v3')
+      .replace(/<link rel="manifest"[^>]*>\n?/, '')
+      .replace('<title>Carga</title>', '<title>Carga Lab</title>')
+      .replace('name="apple-mobile-web-app-title" content="Carga"', 'name="apple-mobile-web-app-title" content="Carga Lab"')
+      .replace('</head>', '<link rel="stylesheet" href="lab.css"></head>')
+      .replace('</body>', '<script src="lab.js"><\/script></body>');
+    document.open(); document.write(t); document.close();
+  } catch (e) { document.getElementById('msg').textContent = 'No se pudo abrir el laboratorio: ' + e.message; }
+})();
+</script>
+</body>
+</html>

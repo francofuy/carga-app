@@ -2,6 +2,7 @@
 
 Web app para iPhone 17 Pro a pantalla completa. Prototipo actual: `app/carga.html` (un solo archivo, sin build) + `app/logic.js` (lógica pura, con tests: `node app/logic.test.js`).
 Pantallas anteriores (`app/prototipo-inicial.html`, `app/fichas.html`) quedan solo como referencia.
+**Laboratorio de efectos:** `app/lab.html` abre la app real (lee `carga.html`, usa otro almacenamiento `carga.lab.v3` y copia tus datos la primera vez) con una capa opcional `app/lab.js` + `app/lab.css` y un botón «Lab» con efectos para probar (todo apagado = idéntica). No modifica `carga.html`; lo que guste se porta a la app real.
 Historial: solo el **Calendario** (elegido de una exploración de tres en `app/historial-lab.html`, que queda como referencia con el Libro mayor y la Ruta por odómetro).
 
 ## Al diseñar o cambiar UI
